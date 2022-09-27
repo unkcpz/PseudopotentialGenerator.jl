@@ -18,63 +18,65 @@ using IntervalArithmetic, IntervalRootFinding
 # rspan = (r0, rm)
 # p = [l, ε, pot]
 
-# function columbode!(du,u,p,r)
-#     v(r)=-1/r
-#     ri = 1/r
-#     r2i = ri * ri
-#     l = 0
-#     du[1]=u[2]
-#     # du[2]=- 2 * ri * u[2] + (l * (l + 1) * r2i + (v(r) - p))*u[1]
-#     du[2]= (v(r) - p)*u[1]
-# end
+function SE_ODE!()
+    # SCHRODINGER 2nd order ODE
+    #
+    #                    d R
+    # y_1 = R     y_2 =  ---
+    #                    d r
+    #
+    # f_1 = y_2
+    #
+    #         2        l(l+1)
+    # f_2 = - - y_2 + [------ + 2(v_ks - e)] y_1
+    #         r         r^2       
+    # l, ε, pot = p
+    # rinv = 1 / r
+    # r2i = rinv * rinv
+    # pot -> Potential
+end
 
-# function plotf(rmax)
-#     u0=[0.0,1.0]
-#     rspan=(1e-10,rmax)
-#     prob(e)=ODEProblem(columbode!,u0,rspan,e)
-#     solf(e)=solve(prob(e), Tsit5(), reltol=1e-8, abstol=1e-8)
-#     e_eigen=find_zero(e->solf(e).u[end][1],(-1.0,-0.1))
-#     println(e_eigen)
+function coulomb_ODE!(du, u, p, r)
+    v(r) = -1/r
+    f(r, e) = v(r) - e
+    du[1] = u[2]
+    du[2] = f(r, p) * u[1]
+end
+
+"""
+The log der diff at turning point rm at given eigenvalue e.
+"""
+function coulomb_ldd(ε::Float64)
+    rm = -1/ε   # f(r, e) = -1/r - e
+
+    prob(u0, rspan, e) = ODEProblem(coulomb_ODE!, u0, rspan, e)
+
+    ODE_INF = 1.0e-12   # The practical value of function at INF.
     
-#     solf(e_eigen)
-# end
+    rmin = 1.0e-8  # the smallest grid x value of potential
+    a1 = 1 
+    a2 = -1/2
+    a3 = 1/12 - ε/6
 
-# sol = plotf(30)
-# # pl = plot(sol.t, [u[1] for u in sol.u])
-# pl = plot(sol)
-# savefig(pl, "myplot.png")
+    r = rmin
+    a1 = 1
+    a2 = -2
+    a3 = 1/3
+    a4 = -1/36
+    bc = a1 * r + a2 * r^2 + a3 * r^3
+    bcp = a1 + 2 * a2 * r + 3 * a3 * r^2 + 4 * a4 * r^3
+    bc_zero = [bc, bcp]
 
-# u0=[0.0,1.0]
-# rmax = 50.0
-# rspan=(1e-10,rmax)
-# prob(e) = ODEProblem(PspGen.SE_ODE!, u0, rspan, e)
-# sol_f(e) = solve(prob(e), Tsit5(), reltol=1e-8, abstol=1e-8)
-# e_eigen = find_zero(e->sol_f(e).u[end][1], (-1.0, -0.1))
-# println(e_eigen)
-# pl = plot(sol_f(e_eigen))
-# savefig(pl, "dummy_ode.png")
+    # emax = -1.0e-12 # either the smallest possible eigenvalue or a very small value
+    rmax = -log(ODE_INF) / sqrt(-1*ε)   # The solution when set V as 0. use the smallest ε if there are more.
 
-ε = find_zero(e->PspGen.ldd_rm(e), (-4.0, -0.21))
+    bc_inf = [ODE_INF, -√(-1/ε) * ODE_INF]
+
+    # outward from origin, and inward from inf
+    ldd = PspGen.logder_diff(prob, ε, bc_zero, bc_inf, rmin, rmax, rm)
+    ldd
+end
+
+
+ε = find_zero(e->coulomb_ldd(e), (-4.0, -0.21))
 println(ε)
-
-# # plot the result function
-# ODE_INF = 1.0e-20
-# rmax = -log(ODE_INF) / sqrt(-1*ε)
-
-# rmin = 1.0e-10  # the smallest grid x value of potential
-# a1 = 1 
-# a2 = -1/2
-# a3 = 1/12 - ε/6
-
-# r = rmin
-# a1 = 1
-# a2 = -2
-# a3 = 1/3
-# a4 = -1/36
-# bc = a1 * r + a2 * r^2 + a3 * r^3
-# bcp = a1 + 2 * a2 * r + 3 * a3 * r^2 + 4 * a4 * r^3
-# bc_zero = [bc, bcp]
-# # println(PspGen.ldd_rm(-0.2500))
-# prob(u0, rspan, e) = ODEProblem(PspGen.SE_ODE!, u0, rspan, e)
-# pl = plot(solve(prob(bc_zero, [rmin, rmax/2], ε), Tsit5(), reltol=1e-12, abstol=1e-12))
-# savefig(pl, "dummy_ode.png")
