@@ -3,7 +3,7 @@ module PspGen
 include("./oncvpsp.jl")
 include("./potential.jl")
 
-function compute_rgrid(Z::Int; rmin::Float64=0.0001, rmax::Float64=100.0, N::Int=2000)
+function compute_rgrid(Z::Int; rmin::Float64=0.0001, rmax::Float64=10.0, N::Int=2000)
     xmin = log(Z * rmin)
     xmax = log(Z * rmax)
     xgrid = range(xmin, stop=xmax, length=N)

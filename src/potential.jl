@@ -14,3 +14,9 @@ function woods_saxon(rgrid::Vector{Float64}, u0::Float64, u1::Float64, r0::Float
 
     v
 end
+
+function hulthen(rgrid::Vector{Float64}, Z::Int, α::Float64)
+    v = @. (-2 * Z / α) * (exp(-rgrid) / (1 - exp(-rgrid)))
+
+    v
+end

@@ -37,9 +37,36 @@ function sol_orb(n::Int, l::Int, rgrid::Vector{Float64}, vloc::Vector{Float64}, 
         throw(ErrorException("lschfb not finished okay."))
     end
 
+    print(ee)
     uu, up, ee
 end
 
-function tfapot(rgrid::Vector{Float64}, Z::Int)
-
+# Thomas Fermi potential implemented from ONCVPSP src/tfapot.f90
+# ! generalized Thomas-Fermi atomic potential
+# (Copy from the comment from ONCVPSP)
+# !...to an article of N. H. March ( "The Thomas-Fermi Approximation in 
+# ! Quantum Mechanics", Adv. Phys. 6, 1 (1957)). He has the formula,
+# ! but it is not the result of his work. The original publication is: 
+# !     R. Latter, Phys. Rev. 99, 510 (1955).
+# ! He says that it''s an analytic fit to an improved calculation of the 
+# ! potential distribution of a Thomas-Fermi atom without exchange first 
+# ! performed by Miranda (C. Miranda, Mem. Acc. Italia 5, 285 (1934)).
+# !                                 Alexander Seidl, TU Munich
+function tf(Z::Int, r::Float64)
+    zz = convert(Float64, Z)
+    # TODO: this one is simple to implemented
+    pot = ccall((:tfapot_, "./liboncv.so"), Float64, (Ref{Float64}, Ref{Float64}), r, zz)
+    pot
 end
+
+function tf(Zion::Int, rgrid::Vector{Float64})
+    pot = zeros(Float64, length(rgrid))
+    for i in 1:length(rgrid)
+        pot[i] = tf(Zion, rgrid[i])
+    end
+
+    pot
+end
+
+# Copy the hartree.f90 is from PStudio code by D. Ceresoli which modified from vout.f90 of ONCVPSP
+function hartree(Z::Int, rgrid::Vector{Float64}, ρ::Vector{Float64})
