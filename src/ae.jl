@@ -67,6 +67,9 @@ function scf!(
         # ion
         E_ion, v_ion = compute_ion(Z, rho, rgrid, dr)
 
+        # update v_ks
+        v_ks = v_ion + v_h + v_xc
+
         # compute energy terms
         E_tot = E_k - E_h + E_xc - E_vxc
         E_k = E_tot - E_ion - E_h - E_xc
@@ -85,7 +88,7 @@ function scf!(
         # v_ks = v
 
         # check convergence on energy
-        if δ < tol
+        if abs(δ) < tol
             flag_conv = true
             break
         end

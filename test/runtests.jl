@@ -26,6 +26,6 @@ srel = false
 xc = (:lda_x, :lda_c_pz)
 orbs = [Orbital(1, 0, 1, Z, rgrid)]   # 1s1
 
-conv, _, E = scf!(Z, orbs, rgrid, dr, xc, srel)
-println(conv, E)
+_, _, E = scf!(Z, orbs, rgrid, dr, xc, srel)
+println(E)
 
