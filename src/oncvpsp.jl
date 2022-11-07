@@ -52,17 +52,17 @@ end
 # ! potential distribution of a Thomas-Fermi atom without exchange first 
 # ! performed by Miranda (C. Miranda, Mem. Acc. Italia 5, 285 (1934)).
 # !                                 Alexander Seidl, TU Munich
-function tf(Z::Int, r::Float64)
+function tf_oncv(Z::Int, r::Float64)
     zz = convert(Float64, Z)
     # TODO: this one is simple to implemented
     pot = ccall((:tfapot_, LIBONCV_PATH), Float64, (Ref{Float64}, Ref{Float64}), r, zz)
     pot
 end
 
-function tf(Z::Int, rgrid::Vector{Float64})
+function tf_oncv(Z::Int, rgrid::Vector{Float64})
     pot = zeros(Float64, length(rgrid))
     for i in 1:length(rgrid)
-        pot[i] = tf(Z, rgrid[i])
+        pot[i] = tf_oncv(Z, rgrid[i])
     end
 
     pot

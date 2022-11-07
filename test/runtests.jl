@@ -23,8 +23,9 @@ using PspGen: scf!, compute_rgrid, Orbital
 Z = 1
 rgrid, dr = compute_rgrid(Z)
 srel = false
+xc = (:lda_x, :lda_c_pz)
 orbs = [Orbital(1, 0, 1, Z, rgrid)]   # 1s1
 
-conv, _, E = scf!(Z, orbs, rgrid, dr, srel)
+conv, _, E = scf!(Z, orbs, rgrid, dr, xc, srel)
 println(conv, E)
 
