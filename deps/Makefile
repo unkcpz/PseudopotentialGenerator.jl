@@ -4,7 +4,7 @@ FFLAGS	=	-Wall -Wextra -fPIC -shared
 LDFLAGS      = -shared
 
 TARGET = liboncv.so
-SOURCES = aeo.f90 lschfb.f90 tfapot.f90, hartree.f90
+SOURCES = aeo.f90 lschfb.f90 tfapot.f90 hartree.f90
 OBJECTS=${SOURCES:.f90=.o}
 
 %.o: %.f90
