@@ -76,11 +76,11 @@ function scf!(
         δ = E_tot - E_old
         E_old = E_tot
 
-        println("E_k: ", E_k)
-        println("E_h: ", E_h) 
-        println("E_xc: ", E_xc)
-        println("E_vxc: ", E_vxc)
-        println("E_ion: ", E_ion)
+        # println("E_k: ", E_k)
+        # println("E_h: ", E_h) 
+        # println("E_xc: ", E_xc)
+        # println("E_vxc: ", E_vxc)
+        # println("E_ion: ", E_ion)
 
         # Print the log
 
