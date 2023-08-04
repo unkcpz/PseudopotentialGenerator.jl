@@ -16,7 +16,7 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 !
-! modified from vout.f90 by D. Ceresoli to calculate only the Hartree potential
+! modified from vout.f90 to calculate only the Hartree potential
 
  subroutine hartree(rho,vo,zion,rr,mmax)
 
