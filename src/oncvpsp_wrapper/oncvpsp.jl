@@ -10,5 +10,5 @@ export tf
 include("tfapot.jl")
 
 # Hartree potential
-#include("hartree.jl")
+include("hartree.jl")
 #include("lsch.jl")

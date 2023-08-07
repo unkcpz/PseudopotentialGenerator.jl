@@ -194,15 +194,15 @@ function compute_xc(rho::Vector{Float64}, rgrid, dr, xc::Tuple{Symbol, Symbol})
     E_xc, vxc, E_vxc
 end
 
-"""
-    integral over space. For energy etc.
-"""
-function integrate(rho, v, rgrid, dr)
-    integrand = @. v * rho * rgrid ^ 2
-    E = itrap(integrand, dr) * 4π
-
-    E
-end
+#"""
+#    integral over space. For energy etc.
+#"""
+#function integrate(rho, v, rgrid, dr)
+#    integrand = @. v * rho * rgrid ^ 2
+#    E = itrap(integrand, dr) * 4π
+#
+#    E
+#end
     
 # trapezoidal method for uniform grid
 # dx is the interval
