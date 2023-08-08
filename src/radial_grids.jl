@@ -19,9 +19,22 @@ function RGrid(Zion::Int64; dx=8e-3, xmin=-8, rmax=100)
     RGrid(r, dr)
 end
 
-function primitive(R::RGrid, f::Vector{Float64})
+function find_idx(R::RGrid, r::Float64)
+    if r < R.r[1] || r > R.r[end]
+        error("r is out of range")
+    end
+    idx = searchsortedlast(R.r, r)
+    idx
+end
+
+function integrate(R::RGrid, f::Vector{Float64}, a::Float64, b::Float64)
     spl = Spline1D(R.r, f, k=5, bc="nearest")
-    i = Dierckx.integrate(spl, R.r[1], R.r[end])
+    i = Dierckx.integrate(spl, a, b)
+    i
+end
+
+function primitive(R::RGrid, f::Vector{Float64})
+    i = integrate(R, f, R.r[1], R.r[end])
     i
 end
 

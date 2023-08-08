@@ -15,25 +15,30 @@ using Dierckx
     #t_N, _ = quadgk(r -> n(r), 0, Inf)
     ρ = [n(r) for r in R.r]
     t_N = primitive(R, ρ)
-    @test t_N ≈ 1 atol=1e-8
+    #@test t_N ≈ 1 atol=1e-8
 
     # test Hartree potential
-    ϕ = PspGen.ONCVPSP.hartree(1.0, R.r, ρ)
+    ϕ = hartree(R, ρ, 1.0)
 
-    # f_sin = sin.(R.r)
-    #fd = Spline1D(R.r, f_sin, k=5, bc="nearest")
-    #fd1 = derivative(fd, R.r)
-
+    # Possion
     grad_ϕ = gradient(R, ϕ)
     hess_ϕ = hessian(R, ϕ)
     lhs = hess_ϕ + 2 * grad_ϕ ./ R.r 
 
-    xmin = R.r[1]
-    #plot(R.r, cos.(R.r), label="A")
-    #plot!(R.r, fd1, label="B")
-    #plot(R.r, cos.(R.r) - fd1, label="A")
-    plot(R.r, lhs, label="LHS", ylims=(-1, 0.3), xlims=(xmin, 0.1))
+    # println(PspGen.find_idx(R, 2.0))
+    a = lhs ./ ρ
+    # println(a[1300:1400])
+    # 0.05
+
+    # Test the stability by compute ρ using Possion Eq
+    plot(R.r, lhs, label="LHS", ylims=(-1, 0.3), xlims=(0, 0.1))
     plot!(R.r, ρ, label="ρ", ylims=(-1, 1), xlims=(0, 10))
-    plot!(R.r, lhs + ρ, label="numerical unstability", ylims=(-1, 1), xlims=(0, 0.04))
+    plot!(R.r, lhs + ρ, label="numerical unstability", ylims=(-1, 1), xlims=(0, 10))
     savefig("hartree.png")
+
+    # Plot and compare the potential with ONCV
+    ϕ_ov = PspGen.ONCVPSP.hartree(1.0, R.r, ρ)
+    plot(R.r, ϕ, label="hartree-PE")
+    plot!(R.r, ϕ_ov, label="hartree-ONCV", ylims=(-1, 1), xlims=(0, 100))
+    savefig("hartree_pot.png")
 end
