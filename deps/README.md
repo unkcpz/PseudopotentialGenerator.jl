@@ -1,3 +1,3 @@
-## Compile the lib using gfortran
+## Compile the fortran lib for comparison the numerical implementation
 
-Run `make` is the folder, which will generate `liboncv.so`, the library for calling Fortran functions.
+Run `make` is the folder, which will generate `libdftatom.so`, the library for calling Fortran functions.

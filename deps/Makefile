@@ -1,20 +1,21 @@
 .SUFFIXS:
-FC	=	gfortran
-FFLAGS	=	-Wall -Wextra -fPIC -shared
-LDFLAGS      = -shared
+FC	    = gfortran
+FFLAGS	= -Wall -std=f95 -Wextra -fPIC -Wimplicit-interface
+LDFLAGS = -shared
 
-TARGET = liboncv.so
-SOURCES = aeo.f90 lschfb.f90 tfapot.f90 hartree.f90
-OBJECTS=${SOURCES:.f90=.o}
+TARGET  = libdftatom.so
+SOURCES = $(wildcard *.f90)
+OBJECTS = $(patsubst %.f90, %.o, $(SOURCES))
 
 %.o: %.f90
 	$(FC) $(FLAGS) -o $@ -c $<
 
-all: $(TARGET)
-
 $(TARGET): $(OBJECTS)
 	$(FC) $(FLAGS) $(OBJECTS) -o $@ $(LDFLAGS)
 
-.PHONY: clean
+.PHONY: clean all
+
+all: $(TARGET)
+
 clean:
-	-rm -rf *.o *.so
+	-rm -rf *.o *.so *.mod
