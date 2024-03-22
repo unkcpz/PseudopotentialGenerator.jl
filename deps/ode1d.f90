@@ -5,12 +5,20 @@ module ode1d
 ! function is used at other places in dftatom to calculate integrals of the
 ! radial density/orbitals.
 
+! jyu, 2024-03-21 note
+! The modification in this file is passing the size of the array explicitly
+! to the function. The modern Fortran allows the not passed but it hard to 
+! wrapper in Julia.
+! See: https://discourse.julialang.org/t/fortran-calling-convention-when-passing-an-array-with-unknown-size/107057
+
+! The `integrate` function is removed.
+
 use types, only: dp
 use utils, only: stop_error
 
 implicit none
 private
-public integrate, normalize, parsefunction, get_n_nodes, get_min_idx, &
+public normalize, parsefunction, get_n_nodes, get_min_idx, &
         adams_interp_outward, adams_extrapolation_outward, &
         adams_interp_outward_implicit, &
         adams_interp_inward_implicit, &
@@ -20,46 +28,32 @@ public integrate, normalize, parsefunction, get_n_nodes, get_min_idx, &
 
 contains
 
-real(dp) function integrate(Rp, f) result(s)
-real(dp), intent(in) :: Rp(:), f(:)
 
-! Choose one from the integration rules below:
-!s = integrate_trapz_1(Rp, f)
-!s = integrate_trapz_3(Rp, f)
-!s = integrate_trapz_5(Rp, f)
-s = integrate_trapz_7(Rp, f)
-!s = integrate_simpson(Rp, f)
-!s = integrate_adams(Rp, f)
-end function
+real(dp) function integrate_trapz_1(Rp, f, N) result(s)
+real(dp), intent(in) :: Rp(N), f(N)
+integer, intent(in) :: N
 
-real(dp) function integrate_trapz_1(Rp, f) result(s)
-real(dp), intent(in) :: Rp(:), f(:)
-
-real(dp) :: g(size(Rp))
-integer :: N
-N = size(Rp)
+real(dp) :: g(N)
 g = f * Rp
 s = (g(1) + g(N)) / 2
 s = s + sum(g(2:N-1))
 end function
 
-real(dp) function integrate_trapz_3(Rp, f) result(s)
-real(dp), intent(in) :: Rp(:), f(:)
+real(dp) function integrate_trapz_3(Rp, f, N) result(s)
+real(dp), intent(in) :: Rp(N), f(N)
+integer, intent(in) :: N
 
-real(dp) :: g(size(Rp))
-integer :: N
-N = size(Rp)
+real(dp) :: g(N)
 g = f * Rp
 s = (9 * (g(1) + g(N)) + 28 * (g(2) + g(N-1)) + 23 * (g(3) + g(N-2))) / 24
 s = s + sum(g(4:N-3))
 end function
 
-real(dp) function integrate_trapz_5(Rp, f) result(s)
-real(dp), intent(in) :: Rp(:), f(:)
+real(dp) function integrate_trapz_5(Rp, f, N) result(s)
+real(dp), intent(in) :: Rp(N), f(N)
+integer, intent(in) :: N
 
-real(dp) :: g(size(Rp))
-integer :: N
-N = size(Rp)
+real(dp) :: g(N)
 g = f * Rp
 s = (  475 * (g(1) + g(N  )) &
     + 1902 * (g(2) + g(N-1)) &
@@ -70,12 +64,11 @@ s = (  475 * (g(1) + g(N  )) &
 s = s + sum(g(6:N-5))
 end function
 
-real(dp) function integrate_trapz_7(Rp, f) result(s)
-real(dp), intent(in) :: Rp(:), f(:)
+real(dp) function integrate_trapz_7(Rp, f, N) result(s)
+real(dp), intent(in) :: Rp(N), f(N)
+integer, intent(in) :: N
 
-real(dp) :: g(size(Rp))
-integer :: N
-N = size(Rp)
+real(dp) :: g(N)
 g = f * Rp
 s = (  36799 * (g(1) + g(N  )) &
     + 176648 * (g(2) + g(N-1)) &
@@ -88,12 +81,12 @@ s = (  36799 * (g(1) + g(N  )) &
 s = s + sum(g(8:N-7))
 end function
 
-real(dp) function integrate_simpson(Rp, f) result(s)
-real(dp), intent(in) :: Rp(:), f(:)
+real(dp) function integrate_simpson(Rp, f, N) result(s)
+real(dp), intent(in) :: Rp(N), f(N)
+integer, intent(in) :: N
 
-real(dp) :: g(size(Rp))
-integer :: i, N
-N = size(Rp)
+real(dp) :: g(N)
+integer :: i
 g = f * Rp
 s = 0
 do i = 2, N-1, 2
@@ -106,12 +99,13 @@ if (modulo(N, 2) == 0) then
 end if
 end function
 
-real(dp) function integrate_adams(Rp, f) result(s)
-real(dp), intent(in) :: Rp(:), f(:)
+real(dp) function integrate_adams(Rp, f, N) result(s)
+real(dp), intent(in) :: Rp(N), f(N)
+integer, intent(in) :: N
 
-real(dp) :: g(size(Rp))
+real(dp) :: g(N)
 integer :: i
-s = integrate_trapz_1(Rp(:4), f(:4))
+s = integrate_trapz_1(Rp(:4), f(:4), 4)
 g = f * Rp
 do i = 4, size(Rp)-1
     s = s + adams_interp_outward(g, i)
@@ -130,7 +124,7 @@ real(dp), intent(in) :: Rp(:)
 real(dp), intent(inout) :: Y(size(Rp))
 
 real(dp) :: S
-S = integrate(Rp, Y**2)
+S = integrate_trapz_7(Rp, Y**2, size(Rp))
 S = sqrt(abs(S))
 if (S > 0) then
     Y = Y / S
