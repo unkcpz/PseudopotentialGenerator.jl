@@ -1,10 +1,17 @@
-"""
-    mesh(r_min, r_max, a, N) -> mesh
-
-Create a mesh with `npts` points between `r_min` and `r_max` using an exponential grid with parameter `a`.
-"""
-function mesh(r_min::Float64, r_max::Float64, a::Float64, N::Int64)::Vector{Float64}
+function mesh_exp(r_min::Float64, r_max::Float64, a::Float64, N::Int64)::Vector{Float64}
     mesh = zeros(Float64, N+1)
-    @ccall libDFTATOM.__wrapper_MOD_mesh_exp(r_min::Ref{Float64}, r_max::Ref{Float64}, a::Ref{Float64}, N::Ref{Int32}, mesh::Ptr{Float64})::Vector{Float64}
+    @ccall libDFTATOM.mesh_exp(r_min::Ref{Float64}, r_max::Ref{Float64}, a::Ref{Float64}, N::Ref{Int32}, mesh::Ptr{Float64})::Vector{Float64}
     mesh
+end
+
+function mesh_exp_deriv(r_min::Float64, r_max::Float64, a::Float64, N::Int64)::Vector{Float64}
+    rp = zeros(Float64, N+1)
+    @ccall libDFTATOM.mesh_exp_deriv(r_min::Ref{Float64}, r_max::Ref{Float64}, a::Ref{Float64}, N::Ref{Int32}, rp::Ptr{Float64})::Vector{Float64}
+    rp
+end
+
+function mesh_exp_deriv2(r_min::Float64, r_max::Float64, a::Float64, N::Int64)::Vector{Float64}
+    rpp = zeros(Float64, N+1)
+    @ccall libDFTATOM.mesh_exp_deriv2(r_min::Ref{Float64}, r_max::Ref{Float64}, a::Ref{Float64}, N::Ref{Int32}, rpp::Ptr{Float64})::Vector{Float64}
+    rpp
 end

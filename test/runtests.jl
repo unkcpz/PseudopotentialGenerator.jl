@@ -13,9 +13,10 @@ end
 
 @testset "mesh" begin
     r_min = 1.0
-    r_max = 10.0
-    a = 1.0
-    N = 1
-    mesh = FPGEN.mesh(r_min, r_max, a, N)
-    println(mesh)
+    r_max = 50.0
+    a = 1e+9
+    N = 10
+    @test mesh_exp(r_min, r_max, a, N) ≈ FPGEN.mesh_exp(r_min, r_max, a, N) atol = 1e-12
+    @test mesh_exp_deriv(r_min, r_max, a, N) ≈ FPGEN.mesh_exp_deriv(r_min, r_max, a, N) atol = 1e-12
+    @test mesh_exp_deriv2(r_min, r_max, a, N) ≈ FPGEN.mesh_exp_deriv2(r_min, r_max, a, N) atol = 1e-12
 end

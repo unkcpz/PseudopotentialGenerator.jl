@@ -8,7 +8,7 @@ export integrate
 
 # Mesh (exponential grid)
 include("mesh.jl")
-export mesh
+export mesh_exp, mesh_exp_deriv, mesh_exp_deriv2
 
 # radial Schrödinger equation outward and inward integration
 include("rshroed.jl")
