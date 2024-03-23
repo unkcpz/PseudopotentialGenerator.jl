@@ -34,6 +34,7 @@ real(dp), intent(in) :: Rp(N), f(N)
 integer, intent(in) :: N
 
 real(dp) :: g(N)
+print *, "N=", N
 g = f * Rp
 s = (g(1) + g(N)) / 2
 s = s + sum(g(2:N-1))

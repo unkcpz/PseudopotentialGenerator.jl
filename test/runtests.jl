@@ -10,3 +10,12 @@ using PGEN
         @test integrate(y, xp, method=method) ≈ FPGEN.integrate(y, xp, method=f_method) atol = 1e-12
     end
 end
+
+@testset "mesh" begin
+    r_min = 1.0
+    r_max = 10.0
+    a = 1.0
+    N = 1
+    mesh = FPGEN.mesh(r_min, r_max, a, N)
+    println(mesh)
+end

@@ -14,7 +14,16 @@ types.o: types.f90
 utils.o: utils.f90 types.o
 	$(FC) $(FLAGS) -o $@ -c $<
 
+mesh.o: mesh.f90 types.o utils.o
+	$(FC) $(FLAGS) -o $@ -c $<
+
 ode1d.o: ode1d.f90 types.o utils.o
+	$(FC) $(FLAGS) -o $@ -c $<
+
+rshroed.o: rshroed.f90 types.o utils.o mesh.o ode1d.o
+	$(FC) $(FLAGS) -o $@ -c $<
+
+wrapper.o: wrapper.f90 mesh.o utils.o types.o
 	$(FC) $(FLAGS) -o $@ -c $<
 
 %.o: %.f90
