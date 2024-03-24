@@ -9,6 +9,6 @@ include("ode1d.jl")
 export integrate
 
 include("mesh.jl")
-export mesh_exp, mesh_exp_deriv, mesh_exp_deriv2
+export Mesh, mesh_exp_deriv2
 
 end
