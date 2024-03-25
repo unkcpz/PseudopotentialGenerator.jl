@@ -4,7 +4,7 @@ libDFTATOM = joinpath(@__DIR__, "../../deps/libdftatom.so")
 
 # ODE 1D solver
 include("ode1d.jl")
-export integrate
+export integrate, rk4_integrate
 
 # Mesh (exponential grid)
 include("mesh.jl")

@@ -6,9 +6,9 @@ export FPGEN
 
 # Julia implementation
 include("ode1d.jl")
-export integrate
+export integrate, rk4_integrate
 
 include("mesh.jl")
-export Mesh, mesh_exp_deriv2
+export Mesh, mesh_exp_deriv2, midpoints
 
 end

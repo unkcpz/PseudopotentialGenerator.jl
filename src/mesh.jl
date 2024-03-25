@@ -35,6 +35,20 @@ struct Mesh
     end
 end
 
+function midpoints(fs::Vector{Float64}, r::Vector{Float64})::Vector{Float64}
+    if length(fs) != length(r)
+        throw(ArgumentError("You must provide the same number of elements in fs and r"))
+    end
+
+    fs_mid = zeros(Float64, length(r)-1)
+
+    for i = 1:length(r)-1
+        fs_mid[i] = (fs[i] + fs[i+1]) / 2
+    end
+
+    fs_mid
+end
+
 
 function mesh_exp_deriv2(mesh::Mesh)::Vector{Float64}
     rpp = mesh_exp_deriv2(mesh.r_min, mesh.r_max, mesh.a, mesh.N)

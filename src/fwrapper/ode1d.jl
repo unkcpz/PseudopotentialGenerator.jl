@@ -34,3 +34,17 @@ function integrate(y, rp; method::Symbol=:f_trapz7)::Float64
 
     s
 end
+
+"""
+    rk4_integrate(r, y0, C1, C2, C1mid, C2mid, max_val)
+
+Integrate the 2nd-order ode using the Runge-Kutta 4th order method (convert to 2 1st-order odes).
+"""
+function rk4_integrate(r::Vector{Float64}, y0::Vector{Float64}, C1::Vector{Float64}, C2::Vector{Float64}, C1mid::Vector{Float64}, C2mid::Vector{Float64}, max_val::Float64)::Tuple{Vector{Float64}, Vector{Float64}, Int64}
+    N = length(r)
+    y1 = zeros(Float64, N)
+    y2 = zeros(Float64, N)
+    imax = @ccall libDFTATOM.rk4_integrate(r::Ptr{Float64}, y0::Ptr{Float64}, C1::Ptr{Float64}, C2::Ptr{Float64}, C1mid::Ptr{Float64}, C2mid::Ptr{Float64}, max_val::Ref{Float64}, y1::Ptr{Float64}, y2::Ptr{Float64}, N::Ref{Int32})::Int64
+
+    y1, y2, imax
+end
