@@ -122,6 +122,35 @@ function adams_interp_outward(y::Vector{Float64}, i::Int)::Float64
     r
 end
 
+"""
+    adams_interp_outward_implicit(y, i)
+
+Interpolate the Adams method outward from the center of the interval (implicit version).
+"""
+function adams_interp_outward_implicit(y::Vector{Float64}, i::Int)::Float64
+    r = +(19 * y[i] - 5 * y[i-1] + y[i-2]) / 24
+    r
+end
+
+"""
+    adams_interp_inward_implicit(y, i)
+
+Interpolate the Adams method inward from the center of the interval (implicit version).
+"""
+function adams_interp_inward_implicit(y::Vector{Float64}, i::Int)::Float64
+    r = -(19 * y[i] - 5 * y[i+1] + y[i+2]) / 24
+    r
+end
+
+"""
+    rk4_integrate(f1, f2, r, y0, max_val)
+
+Integrate the system of ODEs using the Runge-Kutta 4th order method.
+Integrates the following set of ODEs:
+
+    y1' = f1(y1, y2, r)
+    y2' = f2(y1, y2, r)
+"""
 function rk4_integrate(f1::Function, f2::Function, r::Vector{Float64}, y0::Vector{Float64}, max_val::Float64)::Tuple{Vector{Float64}, Vector{Float64}, Int64}
     N = length(r)
     y1 = zeros(N)
@@ -175,6 +204,7 @@ end
 
 Integrate the system of ODEs using the Runge-Kutta 4th order method.
 Integrates the following set of ODEs:
+
     y1' = y2
     y2' = C1 * y1 + C2 * y2
 """

@@ -12,3 +12,4 @@ export mesh_exp, mesh_exp_deriv, mesh_exp_deriv2
 
 # radial Schrödinger equation outward and inward integration
 include("rshroed.jl")
+export schroed_outward_adams

@@ -11,4 +11,7 @@ export integrate, rk4_integrate
 include("mesh.jl")
 export Mesh, mesh_exp_deriv2, midpoints
 
+include("rschroed.jl")
+export schroed_outward_adams, schroed_inward_adams
+
 end

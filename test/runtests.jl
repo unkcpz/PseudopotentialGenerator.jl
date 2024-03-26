@@ -2,6 +2,21 @@ using Test
 using Printf
 using PGEN
 
+@testset "mesh" begin
+    r_min = 1.0
+    r_max = 50.0
+    a = 1e+9
+    N = 10
+    mesh = Mesh(r_min, r_max, a, N)
+    @test mesh.r ≈ FPGEN.mesh_exp(r_min, r_max, a, N) atol = 1e-12
+    @test mesh.rp ≈ FPGEN.mesh_exp_deriv(r_min, r_max, a, N) atol = 1e-12
+    @test mesh_exp_deriv2(mesh) ≈ FPGEN.mesh_exp_deriv2(r_min, r_max, a, N) atol = 1e-12
+
+    a = 1.0 # uniform grid
+    mesh = Mesh(r_min, r_max, a, N)
+    @test mesh.r ≈ FPGEN.mesh_exp(r_min, r_max, a, N) atol = 1e-12
+end
+
 @testset "ode1d Newton-Cotes" begin
     x = range(0, 3, length=20)
     y = sin.(x)
@@ -131,17 +146,30 @@ end
 
 end
 
-@testset "mesh" begin
-    r_min = 1.0
-    r_max = 50.0
-    a = 1e+9
-    N = 10
-    mesh = Mesh(r_min, r_max, a, N)
-    @test mesh.r ≈ FPGEN.mesh_exp(r_min, r_max, a, N) atol = 1e-12
-    @test mesh.rp ≈ FPGEN.mesh_exp_deriv(r_min, r_max, a, N) atol = 1e-12
-    @test mesh_exp_deriv2(mesh) ≈ FPGEN.mesh_exp_deriv2(r_min, r_max, a, N) atol = 1e-12
+@testset "rschored" begin
+    V(r) = 1 / r # Coulomb like potential
 
-    a = 1.0 # uniform grid
-    mesh = Mesh(r_min, r_max, a, N)
-    @test mesh.r ≈ FPGEN.mesh_exp(r_min, r_max, a, N) atol = 1e-12
+    for l in [0, 1]
+        for Z in [1, 5]
+            for E in [-0.5, -2.0]
+                mesh = Mesh(1e-6, 50.0, 1e+9, 500)
+
+                Q_expect, P_expect, imax_expect = FPGEN.schroed_outward_adams(l, Z, E, V, mesh.r, mesh.rp)
+                Q, P, imax = schroed_outward_adams(l, Z, E, V, mesh.r, mesh.rp)
+                @test imax == imax_expect
+                for idx in [1, 50, 100]
+                    @test Q[idx] ≈ Q_expect[idx] atol = 1e-12
+                    @test P[idx] ≈ P_expect[idx] atol = 1e-12
+                end
+
+                Q_expect, P_expect, imin_expect = FPGEN.schroed_inward_adams(l, E, V, mesh.r, mesh.rp)
+                Q, P, imin = schroed_inward_adams(l, E, V, mesh.r, mesh.rp)
+                @test imin == imin_expect
+                for idx in 400:2:405
+                    @test Q[idx] ≈ Q_expect[idx] atol = 1e-12
+                    @test P[idx] ≈ P_expect[idx] atol = 1e-12
+                end
+            end
+        end
+    end
 end

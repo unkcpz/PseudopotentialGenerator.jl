@@ -17,13 +17,17 @@ use ode1d, only: &
     integrate_simpson_original => integrate_simpson, &
     integrate_adams_original => integrate_adams, &
     rk4_integrate_original => rk4_integrate
+use rschroed, only: &
+    schroed_inward_adams_original => schroed_inward_adams, &
+    schroed_outward_adams_original => schroed_outward_adams
 
 implicit none
 
 private
 public mesh_exp, mesh_exp_deriv, mesh_exp_deriv2, &
     integrate_trapz_1, integrate_trapz_3, integrate_trapz_5, integrate_trapz_7, &
-    integrate_simpson, integrate_adams
+    integrate_simpson, integrate_adams, &
+    schroed_outward_adams, schroed_inward_adams
 
 contains
 
@@ -118,7 +122,6 @@ integer(c_int) function rk4_integrate(R, y0, C1, C2, C1mid, C2mid, max_val, y1, 
     real(c_double), intent(out) :: y1(N), y2(N)
 
     ! The integration stops at R(imax)
-    imax = 0
     call rk4_integrate_original(R, y0, C1, C2, C1mid, C2mid, max_val, y1, y2, imax)
 end function
 
@@ -126,17 +129,27 @@ end function
 !
 ! Wrappers for rschroed.90
 !
-integer(c_int) function integrate_rschroed_rk4(l, Z, E, R, V, Vmid, P, Q, N) result(imax) bind(c)
+integer(c_int) function schroed_outward_adams(l, Z, E, R, Rp, V, P, Q, N) result(imax) bind(c)
     integer(c_int), intent(in) :: l
     integer(c_int), intent(in) :: Z
     integer(c_int), intent(in) :: N
     real(c_double), intent(in) :: E
-    real(c_double), intent(in) :: R(N)
-    real(c_double), intent(in) :: V(N), Vmid(N-1)
+    real(c_double), intent(in) :: R(N), Rp(N)
+    real(c_double), intent(in) :: V(N)
     real(c_double), intent(out) :: P(N), Q(N)
 
-    imax = 0
-    call integrate_rschroed_rk4_original(l, Z, E, R, V, Vmid, P, Q, imax)
+    call schroed_outward_adams_original(l, Z, E, R, Rp, V, P, Q, imax)
+end function
+
+integer(c_int) function schroed_inward_adams(l, E, R, Rp, V, P, Q, N) result(imin) bind(c)
+    integer(c_int), intent(in) :: l
+    integer(c_int), intent(in) :: N
+    real(c_double), intent(in) :: E
+    real(c_double), intent(in) :: R(N), Rp(N)
+    real(c_double), intent(in) :: V(N)
+    real(c_double), intent(out) :: P(N), Q(N)
+
+    call schroed_inward_adams_original(l, E, R, Rp, V, P, Q, imin)
 end function
 
 end module

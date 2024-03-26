@@ -221,14 +221,6 @@ C2mid = -2/Rmid
 call rk4_integrate(R, y0, C1, C2, C1mid, C2mid, max_val, y1, y2, imax)
 P(:imax) = y1(:imax)*R(:imax) ! P(r) = r * R(r)
 Q(:imax) = y2(:imax)*R(:imax) + y1(:imax) ! Q(r) = P'(r) = r * R'(r) + R(r)
-
-! MODIFICATION: jyu
-! modifed to fill the P, Q to the same size as R
-! otherwise not easy to wrapper to other languages
-P(imax+1:) = 0
-Q(imax+1:) = 0
-! END MODIFICATION
-
 end subroutine
 
 end module
