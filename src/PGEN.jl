@@ -17,4 +17,7 @@ export Mesh, mesh_exp_deriv2, midpoints
 include("rschroed.jl")
 export schroed_outward_adams, schroed_inward_adams
 
+include("reigen.jl")
+export solve_radial_eigenproblem
+
 end
