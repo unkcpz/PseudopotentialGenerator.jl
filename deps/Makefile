@@ -20,10 +20,16 @@ mesh.o: mesh.f90 types.o utils.o
 ode1d.o: ode1d.f90 types.o utils.o
 	$(FC) $(FLAGS) -o $@ -c $<
 
-rshroed.o: rshroed.f90 types.o utils.o mesh.o ode1d.o
+rschroed.o: rschroed.f90 types.o utils.o mesh.o ode1d.o
 	$(FC) $(FLAGS) -o $@ -c $<
 
-wrapper.o: wrapper.f90 mesh.o utils.o types.o
+rdirac.o: rdirac.f90 types.o utils.o mesh.o ode1d.o
+	$(FC) $(FLAGS) -o $@ -c $<
+
+reigen.o: reigen.f90 types.o utils.o ode1d.o rschroed.o rdirac.o
+	$(FC) $(FLAGS) -o $@ -c $<
+
+wrapper.o: wrapper.f90 mesh.o utils.o ode1d.o types.o rschroed.o rdirac.o
 	$(FC) $(FLAGS) -o $@ -c $<
 
 %.o: %.f90

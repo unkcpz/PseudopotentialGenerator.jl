@@ -173,3 +173,18 @@ end
         end
     end
 end
+
+@testset "reigen norel" begin
+    # Hydrogen-like atom
+    Z = 92
+    n = 1
+    l = n -1 
+    E_exact = -Z^2 / (2.0 * n^2)
+    mesh = Mesh(1e-8, 50.0, 1e+6, 3000)
+    V(r) = -Z / r
+    perturb = false
+
+    E, Q, P = FPGEN.solve_radial_eigenproblem(n, l, Z, V, mesh; tol=1e-9, max_iter=100, Emax = 0.0, Emin = -5000.0, E_ini = -1000.0, rel = false, perturb = perturb)
+    println("E = $E")
+    println("E_exact = $E_exact")
+end

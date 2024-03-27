@@ -4,7 +4,7 @@ module wrapper
 ! Orginal code from dftatom use modern Fortran features like allocatable arrays
 ! and assumed-shape arrays, which are not supported by Julia's ccall interface.
 
-use iso_c_binding, only: c_double, c_int
+use iso_c_binding, only: c_double, c_int, c_bool
 use mesh, only: &
     mesh_exp_original => mesh_exp, &
     mesh_exp_deriv_original => mesh_exp_deriv, &
@@ -20,6 +20,8 @@ use ode1d, only: &
 use rschroed, only: &
     schroed_inward_adams_original => schroed_inward_adams, &
     schroed_outward_adams_original => schroed_outward_adams
+use reigen, only: &
+    solve_radial_eigenproblem_original => solve_radial_eigenproblem
 
 implicit none
 
@@ -151,5 +153,21 @@ integer(c_int) function schroed_inward_adams(l, E, R, Rp, V, P, Q, N) result(imi
 
     call schroed_inward_adams_original(l, E, R, Rp, V, P, Q, imin)
 end function
+
+subroutine solve_radial_eigenproblem(n, l, Ein, eps, max_iter, &
+    R, Rp, V, Z, c, relat, perturb, Emin_init, Emax_init, converged, E, P, Q, NN) bind(c)
+    integer(c_int), intent(in) :: n, l, relat, Z, max_iter
+    integer(c_int), intent(in) :: NN
+    real(c_double), intent(in) :: R(NN), Rp(NN), V(NN), eps, Ein, c
+    logical(c_bool), intent(in) :: perturb
+    real(c_double), intent(in) :: Emin_init, Emax_init
+    integer(c_int), intent(out) :: converged
+    real(c_double), intent(out) :: P(NN), Q(NN), E
+    logical :: fperturb
+
+    fperturb = logical(perturb)
+    call solve_radial_eigenproblem_original(n, l, Ein, eps, max_iter, &
+        R, Rp, V, Z, c, relat, fperturb, Emin_init, Emax_init, converged, E, P, Q)
+end subroutine
 
 end module

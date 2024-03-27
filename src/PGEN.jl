@@ -5,6 +5,9 @@ include("FPGEN.jl")
 export FPGEN
 
 # Julia implementation
+include("common.jl")
+export SPPED_OF_LIGHT
+
 include("ode1d.jl")
 export integrate, rk4_integrate
 
