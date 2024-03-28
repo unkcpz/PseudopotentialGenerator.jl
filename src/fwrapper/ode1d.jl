@@ -48,3 +48,10 @@ function rk4_integrate(r::Vector{Float64}, y0::Vector{Float64}, C1::Vector{Float
 
     y1, y2, imax
 end
+
+function midpoints(x::Vector{Float64}, r::Vector{Float64})::Vector{Float64}
+    N = length(x)
+    x_mid = zeros(Float64, N-1)
+    @ccall libDFTATOM.get_midpoints(r::Ref{Float64}, x::Ref{Float64}, N::Ref{Int32}, x_mid::Ptr{Float64})::Cvoid
+    x_mid
+end

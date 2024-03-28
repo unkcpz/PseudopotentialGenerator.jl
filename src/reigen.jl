@@ -1,7 +1,13 @@
 function solve_radial_eigenproblem(n::Int64, l::Int64, Z::Int64, V::Function, mesh::Mesh; 
     tol=1e-9, max_iter=200, E_window=[-8000.0, -0.0], E_ini = -1000.0, rel = false, perturb = false)::Tuple{Float64, Vector{Float64}, Vector{Float64}, Bool}
-    # TODO: add dirac solver
+    V = V.(mesh.r)
+    E, Q, P, is_converged = solve_radial_eigenproblem(n, l, Z, V, mesh; tol=tol, max_iter=max_iter, E_window=E_window, E_ini = E_ini, rel = rel, perturb = perturb)
 
+    E, Q, P, is_converged
+end
+function solve_radial_eigenproblem(n::Int64, l::Int64, Z::Int64, V::Vector{Float64}, mesh::Mesh; 
+    tol=1e-9, max_iter=200, E_window=[-8000.0, -0.0], E_ini = -1000.0, rel = false, perturb = false)::Tuple{Float64, Vector{Float64}, Vector{Float64}, Bool}
+    # TODO: add dirac solver
     N = length(mesh.r)
     P = zeros(Float64, N)
     Q = zeros(Float64, N)
@@ -72,8 +78,8 @@ function solve_radial_eigenproblem(n::Int64, l::Int64, Z::Int64, V::Function, me
 
         # Beyond the turning point, meaning the partical is classically forbidden
         # The wave function exponentially decays. 
-        Vp(x) = V(x) + l*(l+1) / (2 * x^2)
-        ctp = find_ctp(Vp, E, mesh.r)
+        Vp = @. V + l*(l+1) / (2 * mesh.r^2)
+        ctp = find_ctp(Vp, E)
 
         if !perturb
             ctp = N
@@ -87,7 +93,7 @@ function solve_radial_eigenproblem(n::Int64, l::Int64, Z::Int64, V::Function, me
         end
 
         # outward integration
-        P[1:ctp], Q[1:ctp], imax = schroed_outward_adams(l, Z, E, V, mesh.r[1:ctp], mesh.rp[1:ctp])
+        P[1:ctp], Q[1:ctp], imax = schroed_outward_adams(l, Z, E, V[1:ctp], mesh.r[1:ctp], mesh.rp[1:ctp])
         nnodes = count_nodes(P[1:imax])
 
         if nnodes != n - l - 1 || ctp == N || imax < ctp
@@ -113,7 +119,7 @@ function solve_radial_eigenproblem(n::Int64, l::Int64, Z::Int64, V::Function, me
         # inward integration
         P_inward = zeros(Float64, N)
         Q_inward = zeros(Float64, N)
-        P_inward[ctp:end], Q_inward[ctp:end], imin = schroed_inward_adams(l, E, V, mesh.r[ctp:end], mesh.rp[ctp:end])
+        P_inward[ctp:end], Q_inward[ctp:end], imin = schroed_inward_adams(l, E, V[ctp:end], mesh.r[ctp:end], mesh.rp[ctp:end])
         if imin > 1
             # The inward integration to reach the turning point, diverged
             @warn "Inward integration to reach the turning point diverged."
@@ -173,13 +179,13 @@ function solve_radial_eigenproblem(n::Int64, l::Int64, Z::Int64, V::Function, me
         throw(ArgumentError("Wave function is too small, S = $S"))
     end
 
-    E, Q, P, is_converged
+    E, P, Q, is_converged
 end
 
-function find_ctp(V::Function, E::Float64, r::Vector{Float64})::Int64
-    N = length(r)
+function find_ctp(V::Vector{Float64}, E::Float64)::Int64
+    N = length(V)
     for i in N:-1:1
-        if V(r[i]) < E
+        if V[i] < E
             return i
         end
     end

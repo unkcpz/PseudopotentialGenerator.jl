@@ -16,12 +16,20 @@ use ode1d, only: &
     integrate_trapz_7_original => integrate_trapz_7, &
     integrate_simpson_original => integrate_simpson, &
     integrate_adams_original => integrate_adams, &
-    rk4_integrate_original => rk4_integrate
+    rk4_integrate_original => rk4_integrate, &
+    get_midpoints_original => get_midpoints
 use rschroed, only: &
     schroed_inward_adams_original => schroed_inward_adams, &
     schroed_outward_adams_original => schroed_outward_adams
 use reigen, only: &
     solve_radial_eigenproblem_original => solve_radial_eigenproblem
+use drivers, only: &
+    atom_lda_original => atom_lda, &
+    get_atom_orb_original => get_atom_orb
+use dft, only: &
+    get_Vxc_original => get_Vxc
+use rpoisson, only: &
+    rpoisson_outward_pc_original => rpoisson_outward_pc
 
 implicit none
 
@@ -29,7 +37,10 @@ private
 public mesh_exp, mesh_exp_deriv, mesh_exp_deriv2, &
     integrate_trapz_1, integrate_trapz_3, integrate_trapz_5, integrate_trapz_7, &
     integrate_simpson, integrate_adams, &
-    schroed_outward_adams, schroed_inward_adams
+    schroed_outward_adams, schroed_inward_adams, &
+    solve_radial_eigenproblem, &
+    atom_lda, get_Vxc, &
+    get_midpoints
 
 contains
 
@@ -127,6 +138,14 @@ integer(c_int) function rk4_integrate(R, y0, C1, C2, C1mid, C2mid, max_val, y1, 
     call rk4_integrate_original(R, y0, C1, C2, C1mid, C2mid, max_val, y1, y2, imax)
 end function
 
+subroutine get_midpoints(R, V, N, Vmid) bind(c)
+    ! Wrapper for the get_midpoints() subroutine
+    integer(c_int), intent(in) :: N
+    real(c_double), intent(in) :: R(N), V(N)
+    real(c_double), intent(out) :: Vmid(N-1)
+
+    Vmid = get_midpoints_original(R, V)
+end subroutine
 
 !
 ! Wrappers for rschroed.90
@@ -168,6 +187,63 @@ subroutine solve_radial_eigenproblem(n, l, Ein, eps, max_iter, &
     fperturb = logical(perturb)
     call solve_radial_eigenproblem_original(n, l, Ein, eps, max_iter, &
         R, Rp, V, Z, c, relat, fperturb, Emin_init, Emax_init, converged, E, P, Q)
+end subroutine
+
+!
+! Wrappers for dft.f90
+!
+subroutine get_Vxc(R, rho, relat, c, exc, Vxc, N) bind(c)
+    integer(c_int), intent(in) :: N
+    real(c_double), intent(in) :: R(N), rho(N)
+    logical(c_bool), intent(in) :: relat
+    real(c_double), intent(in) :: c
+    real(c_double), intent(out) :: exc(N), Vxc(N)
+
+    logical :: frelat
+
+    frelat = logical(relat)
+    call get_Vxc_original(R, rho, frelat, c, exc, Vxc)
+end subroutine
+
+!
+! Wrappers for rpoisson.f90
+!
+subroutine rpoisson_outward_pc(R, Rp, rho, Vh, N) bind(c)
+    integer(c_int), intent(in) :: N
+    real(c_double), intent(in) :: R(N), Rp(N), rho(N)
+    real(c_double), intent(out) :: Vh(N)
+
+    Vh = rpoisson_outward_pc_original(R, Rp, rho)
+end subroutine
+
+! 
+! Wrappers for drivers.f90
+!
+subroutine atom_lda(Z, r_min, r_max, a, N, n_orb, &
+    no, lo, fo, ks_energies, E_tot, R, Rp, V_tot, density, orbitals, &
+    reigen_eps, reigen_max_iter, mixing_eps, mixing_alpha, &
+    mixing_max_iter, perturb) bind(c)
+    integer(c_int), intent(in) :: Z
+    real(c_double), intent(in) :: r_min, r_max, a
+    integer(c_int), intent(in) :: N, n_orb
+    integer(c_int), intent(out) :: no(n_orb), lo(n_orb)
+    real(c_double), intent(out) :: fo(n_orb)
+    real(c_double), intent(out) :: ks_energies(n_orb)
+    real(c_double), intent(out) :: E_tot
+    real(c_double), intent(out) :: R(N+1), Rp(N+1)
+    real(c_double), intent(out) :: V_tot(N+1)
+    real(c_double), intent(out) :: density(N+1)
+    real(c_double), intent(out) :: orbitals(N+1, n_orb)
+    real(c_double), intent(in) :: reigen_eps, mixing_eps, mixing_alpha
+    integer(c_int), intent(in) :: mixing_max_iter, reigen_max_iter
+    logical(c_bool), intent(in) :: perturb
+    logical :: fperturb
+
+    fperturb = logical(perturb)
+
+    call atom_lda_original(Z, r_min, r_max, a, N, no, lo, fo, ks_energies, E_tot, R, Rp, &
+        V_tot, density, orbitals, reigen_eps, reigen_max_iter, mixing_eps, &
+        mixing_alpha, mixing_max_iter, fperturb)
 end subroutine
 
 end module

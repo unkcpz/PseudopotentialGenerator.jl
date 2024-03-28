@@ -6,7 +6,7 @@ export FPGEN
 
 # Julia implementation
 include("common.jl")
-export SPPED_OF_LIGHT
+export SPPED_OF_LIGHT, Orbital
 
 include("ode1d.jl")
 export integrate, rk4_integrate
@@ -19,5 +19,14 @@ export schroed_outward_adams, schroed_inward_adams
 
 include("reigen.jl")
 export solve_radial_eigenproblem
+
+include("potential.jl")
+export coulomb_potential, thomas_fermi_potential
+
+include("scf.jl")
+export self_consistent_field
+
+include("rpoisson.jl")
+export rpoisson_outward_pc
 
 end
