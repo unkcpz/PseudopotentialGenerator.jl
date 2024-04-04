@@ -1,10 +1,27 @@
 using Dierckx: Spline1D
 
+"""
+    Mesh
+
+A mesh object that stores the radial grid points and their derivatives.
+To create a mesh object, use the constructor `Mesh(r_min, r_max, a, N)`.
+
+The radial grid points are generated using the formula:
+
+    r[i] = r_min + alpha * (exp(beta * (i - 1)) - 1)
+
+    alpha = (r_max - r_min) / (exp(beta * N) - 1) 
+    
+    beta = log(a) / (N - 1).
+
+The actual number of points in the mesh is N+1.
+"""
 struct Mesh
     r_min::Float64
     r_max::Float64
     a::Float64
-    N::Int64 # TODO: confusing for N and length(r), use size instead
+    _N::Int64
+    size::Int64
     r::Vector{Float64}
     rp::Vector{Float64}
     function Mesh(r_min::Float64, r_max::Float64, a::Float64, N::Int64)
@@ -33,7 +50,7 @@ struct Mesh
             end
         end
 
-        new(r_min, r_max, a, N, r, rp)
+        new(r_min, r_max, a, N, N+1, r, rp)
     end
 end
 
@@ -70,7 +87,7 @@ end
 
 
 function mesh_exp_deriv2(mesh::Mesh)::Vector{Float64}
-    rpp = mesh_exp_deriv2(mesh.r_min, mesh.r_max, mesh.a, mesh.N)
+    rpp = mesh_exp_deriv2(mesh.r_min, mesh.r_max, mesh.a, mesh._N)
     rpp
 end
 

@@ -17,17 +17,17 @@ function integrate(y, rp; method::Symbol=:f_trapz7)::Float64
     end
 
     if method == :f_trapz1
-        s = @ccall libDFTATOM.integrate_trapz_1(rp::Ptr{Float64}, y::Ptr{Float64}, N::Ref{Int32})::Float64
+        s = @ccall libDFTATOM.integrate_trapz_1(rp::Ptr{Float64}, y::Ptr{Float64}, N::Ref{Cint})::Float64
     elseif method == :f_trapz3
-        s = @ccall libDFTATOM.integrate_trapz_3(rp::Ptr{Float64}, y::Ptr{Float64}, N::Ref{Int32})::Float64
+        s = @ccall libDFTATOM.integrate_trapz_3(rp::Ptr{Float64}, y::Ptr{Float64}, N::Ref{Cint})::Float64
     elseif method == :f_trapz5
-        s = @ccall libDFTATOM.integrate_trapz_5(rp::Ptr{Float64}, y::Ptr{Float64}, N::Ref{Int32})::Float64
+        s = @ccall libDFTATOM.integrate_trapz_5(rp::Ptr{Float64}, y::Ptr{Float64}, N::Ref{Cint})::Float64
     elseif method == :f_trapz7
-        s = @ccall libDFTATOM.integrate_trapz_7(rp::Ptr{Float64}, y::Ptr{Float64}, N::Ref{Int32})::Float64
+        s = @ccall libDFTATOM.integrate_trapz_7(rp::Ptr{Float64}, y::Ptr{Float64}, N::Ref{Cint})::Float64
     elseif method == :f_simpson
-        s = @ccall libDFTATOM.integrate_simpson(rp::Ptr{Float64}, y::Ptr{Float64}, N::Ref{Int32})::Float64
+        s = @ccall libDFTATOM.integrate_simpson(rp::Ptr{Float64}, y::Ptr{Float64}, N::Ref{Cint})::Float64
     elseif method == :f_adams
-        s = @ccall libDFTATOM.integrate_adams(rp::Ptr{Float64}, y::Ptr{Float64}, N::Ref{Int32})::Float64
+        s = @ccall libDFTATOM.integrate_adams(rp::Ptr{Float64}, y::Ptr{Float64}, N::Ref{Cint})::Float64
     else
         throw(ArgumentError("Invalid method: $method"))
     end
@@ -44,7 +44,7 @@ function rk4_integrate(r::Vector{Float64}, y0::Vector{Float64}, C1::Vector{Float
     N = length(r)
     y1 = zeros(Float64, N)
     y2 = zeros(Float64, N)
-    imax = @ccall libDFTATOM.rk4_integrate(r::Ptr{Float64}, y0::Ptr{Float64}, C1::Ptr{Float64}, C2::Ptr{Float64}, C1mid::Ptr{Float64}, C2mid::Ptr{Float64}, max_val::Ref{Float64}, y1::Ptr{Float64}, y2::Ptr{Float64}, N::Ref{Int32})::Int64
+    imax = @ccall libDFTATOM.rk4_integrate(r::Ptr{Float64}, y0::Ptr{Float64}, C1::Ptr{Float64}, C2::Ptr{Float64}, C1mid::Ptr{Float64}, C2mid::Ptr{Float64}, max_val::Ref{Float64}, y1::Ptr{Float64}, y2::Ptr{Float64}, N::Ref{Cint})::Int64
 
     y1, y2, imax
 end
@@ -52,6 +52,6 @@ end
 function midpoints(x::Vector{Float64}, r::Vector{Float64})::Vector{Float64}
     N = length(x)
     x_mid = zeros(Float64, N-1)
-    @ccall libDFTATOM.get_midpoints(r::Ref{Float64}, x::Ref{Float64}, N::Ref{Int32}, x_mid::Ptr{Float64})::Cvoid
+    @ccall libDFTATOM.get_midpoints(r::Ref{Float64}, x::Ref{Float64}, N::Ref{Cint}, x_mid::Ptr{Float64})::Cvoid
     x_mid
 end

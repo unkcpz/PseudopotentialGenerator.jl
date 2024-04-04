@@ -14,7 +14,6 @@ function solve_radial_eigenproblem(n::Int64, l::Int64, Z::Int64, V::Vector{Float
     c = SPEED_OF_LIGHT
     is_converged = false
 
-    # TODO: make E initialzed to Hydrogen-like atom energy: E = - Z^2 / (2.0 * n^2)
     E = E_ini
 
     if n < 1 || l < 0 || l >= n

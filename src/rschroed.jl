@@ -4,7 +4,6 @@
 Integrate the Schrödinger equation outward using the Adams method.
 The Adams method can be applied since the equation is map to the uniform mesh.
 """
-# TODO: make r, rp <- mesh
 function schroed_outward_adams(l::Int64, Z::Int64, E::Float64, V::Function, r::Vector{Float64}, rp::Vector{Float64}; max_val::Float64=1e+6)::Tuple{Vector{Float64}, Vector{Float64}, Int64}
     V = V.(r)
     u1, u2, imax = schroed_outward_adams(l, Z, E, V, r, rp; max_val=max_val)
@@ -18,7 +17,6 @@ Integrate the Schrödinger equation outward using the Adams method.
 The Adams method can be applied since the equation is map to the uniform mesh.
 V is a vector.
 """
-# TODO: make r, rp <- mesh
 function schroed_outward_adams(l::Int64, Z::Int64, E::Float64, V::Vector{Float64}, r::Vector{Float64}, rp::Vector{Float64}; max_val::Float64=1e+6)::Tuple{Vector{Float64}, Vector{Float64}, Int64}
     N = length(r)
     u1 = zeros(Float64, N)  # Q

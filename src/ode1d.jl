@@ -11,8 +11,6 @@ The method must be one of the following (f_ prefix means the implementation is i
     * `adams`
 """
 function integrate(y, rp; method::Symbol=:trapz7)::Float64
-    # TODO: attach Fortran method here
-
     N = length(rp)
     if N < 8
         throw(ArgumentError("Length of integrated f must be at least 8"))
@@ -240,7 +238,6 @@ function rk4_integrate(r::Vector{Float64}, y0::Vector{Float64}, C1::Vector{Float
         dydx[1] =                            y[2]
         dydx[2] = C1[i-1] * y[1] + C2[i-1] * y[2]
         @. yt = y + h / 2 * dydx
-        #println("dftatom dydx: ", dydx)
 
         dyt[1] =                                   yt[2]
         dyt[2] = C1mid[i-1] * yt[1] + C2mid[i-1] * yt[2]
@@ -298,7 +295,6 @@ function rk4_integrate_poisson(r::Vector{Float64}, y0::Vector{Float64}, C1::Vect
         dydx[1] =                            y[2]
         dydx[2] = C1[i-1] + C2[i-1] * y[2]
         @. yt = y + h / 2 * dydx
-        #println("dftatom dydx: ", dydx)
 
         dyt[1] =                                   yt[2]
         dyt[2] = C1mid[i-1] + C2mid[i-1] * yt[2]

@@ -57,19 +57,8 @@ function self_consistent_field(Z::Int64, mesh::Mesh, orbs::Vector{Orbital}; mixi
     iter = 0
 
     function fixpoint_ks(vin, params)
-        println("iter = ", iter)
-        println("vin = ", vin[50])
-        println("v_tot = ", saved.v_tot[50])
-        println("v_coulomb = ", params.v_coulomb[50])
-        println("ks_energies = ", saved.ε_lst)
-        println("v_h = ", saved.v_h[50])
-        println("v_xc = ", saved.v_xc[50])
-        println("rho = ", saved.ρ[50])
-
         ρ = v2ρ!(vin, params, saved)
         vout = ρ2v!(ρ, params, saved)
-
-        println("vout = ", vout[50])
 
         saved.ρ = ρ
 
@@ -109,8 +98,7 @@ function v2ρ!(v_in::Vector{Float64}, p, saved)::Vector{Float64}
         Eini = saved.ε_lst[idx]
 
         v_tot = v_in + p.v_coulomb
-        ε, P, _, is_converged = solve_radial_eigenproblem(n, l, p.Z, v_tot, p.mesh; tol=1e-9, max_iter=200, E_window=[Emin, Emax], E_ini = Eini, rel = false, perturb = true)
-        println("ε = ", ε)
+        ε, P, _, is_converged = solve_radial_eigenproblem(n, l, p.Z, v_tot, p.mesh; tol=1e-9, max_iter=1000, E_window=[Emin, Emax], E_ini = Eini, rel = false, perturb = true)
 
         if !is_converged
             throw(ArgumentError("Failed to solve the radial eigenproblem"))
@@ -123,14 +111,12 @@ function v2ρ!(v_in::Vector{Float64}, p, saved)::Vector{Float64}
         Y = P ./ r
 
         # update rho and orbitals
-        #println("f: ", f)
         @. rho += Y ^ 2 * f
         saved.Ys[idx, :] = Y
     end
 
     # normalize the density
     rho = rho / (4 * π)
-    #println("rho = ", rho[10:100:500])
     rho
 end
 

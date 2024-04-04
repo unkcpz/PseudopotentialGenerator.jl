@@ -29,14 +29,7 @@ call get_Vxc(d%R, d%rho, d%dirac, d%c, d%e_xc, d%V_xc)
 d%V_h = get_Vh(d%R, d%Rp, d%rho)
 call total_energy(d%fo, d%ks_energies, d%V_tot, d%V_h, d%V_coulomb, d%e_xc, &
     d%R, d%Rp, d%rho, d%Ekin, d%Ecoul, d%Eenuc, d%Exc, d%Etot)
-!print *, "FPGEN Vxc=", d%V_xc(1:5)
-!print *, "FPGEN Vh=", d%V_h(1:5)
-!print *, "FPGEN Vtot=", d%V_tot(1:5)
-!print *, "FPGEN pure V=", d%V_xc(1:5) + d%V_h(1:5)
 d%V_tot = d%V_coulomb + d%V_xc + d%V_h
-!if (d%scf_iter == 1) then
-!    print *, "rho2V V_tot=", d%V_tot(50)
-!end if
 end subroutine
 
 subroutine V2rho(d)
@@ -65,26 +58,14 @@ do i = 1, size(d%no)
     Emax_init = d%Emax_init(i)
     Emin_init = d%Emin_init(i)
 
-    !print *, "V_tot=", d%V_tot(1:5)
-    !print *, "E=", Ein, "n=", n, "l=", l, "relat=", relat
-    !print *, "Emin=", Emin_init, "Emax=", Emax_init
-    !print *, "V=", d%V_tot(1:5)
-    !print *, "Z=", d%Z
-    !print *, "ks_energies=", d%ks_energies
-    !if (d%scf_iter == 2) then
-    !    print *, "V_tot=", d%V_tot(50)
-    !end if
-
     call solve_radial_eigenproblem(n, l, Ein, d%reigen_eps, &
         d%reigen_max_iter, &
         d%R, d%Rp, d%V_tot, &
         d%Z, d%c, relat, d%perturb, Emin_init, Emax_init, &
         converged, d%ks_energies(i), P, Q)
-    !print *, "eig= ", i, "->", d%ks_energies(i)
-    !print *, "P=", P(1:5)
     if (converged /= 0) then
-        !print *, "converged=", converged
-        !print *, d%scf_iter, n, l, relat
+        print *, "converged=", converged
+        print *, d%scf_iter, n, l, relat
         !print *, "skipping the state"
         !Y = 0
         call stop_error("V2rho: Radial eigen problem didn't converge")
@@ -95,7 +76,6 @@ do i = 1, size(d%no)
         Y = sqrt(P**2 + Q**2) / d%R
     end if
     d%rho = d%rho + d%fo(i) * Y**2
-    !print *, "fo=", d%fo(i)
     d%orbitals(:, i) = Y
 end do
 d%rho = d%rho / (4*pi)
@@ -111,30 +91,8 @@ real(dp) :: F(size(V))
 d%scf_iter = i
 ! We converge upon the non-Coulombic part of the potential:
 d%V_tot = d%V_coulomb + V
-if (d%scf_iter < 3) then
-    print *, "scf_iter=", d%scf_iter
-    print *, "before iter V=", V(50)
-    print *, "before iter V_tot=", d%V_tot(50)
-    print *, "before iter V_coulomb=", d%V_coulomb(50)
-    print *, "before iter ks_energies=", d%ks_energies
-    print *, "before iter v_h=", d%V_h(50)
-    print *, "before iter v_xc=", d%V_xc(50)
-    print *, "before iter rho=", d%rho(50)
-end if
-
 call V2rho(d)
 call rho2V(d)
-if (d%scf_iter < 3) then
-    !print *, "scf_iter=", d%scf_iter
-    !print *, "before iter V=", V(50)
-    !print *, "before iter V_tot=", d%V_tot(50)
-    !print *, "before iter V_coulomb=", d%V_coulomb(50)
-    !print *, "before iter ks_energies=", d%ks_energies
-    !print *, "before iter v_h=", d%V_h(50)
-    !print *, "before iter v_xc=", d%V_xc(50)
-    !print *, "before iter rho=", d%rho(50)
-    print *, "vvout = ", d%V_xc(50) + d%V_h(50)
-end if
 F = d%V_xc + d%V_h - V
 end function
 
@@ -156,7 +114,6 @@ rho = -n
 
 E_band = sum(fo * ks_energies)
 T_s = E_band + 4*pi * integrate(Rp, V_in * rho * R**2)
-!print *, "inftt 4piinf...", 4*pi*integrate(Rp, V_in * rho * R**2)
 
 E_ee = -2*pi * integrate(Rp, V_h * rho * R**2)
 E_en =  4*pi * integrate(Rp, (-V_coulomb) * rho * R**2)
@@ -165,13 +122,6 @@ E_c = E_ee + E_en
 EE_xc = -4*pi * integrate(Rp, e_xc * rho * R**2)
 
 Etot = T_s + E_c + EE_xc
-!print *, "Etot=", Etot
-!print *, "E_band=", E_band
-!print *, "T_s=", T_s
-!print *, "E_c=", E_c
-!print *, "EE_xc=", EE_xc
-!print *, "E_ee=", E_ee
-!print *, "E_en=", E_en
 end subroutine
 
 subroutine get_Vxc(R, rho, relat, c, exc, Vxc)
@@ -185,8 +135,6 @@ integer :: i
 do i = 1, size(R)
     call getvxc_scalar(rho(i), relat, c, exc(i), Vxc(i))
 end do
-!print *, "rho=", rho(1:5)
-!print *, "Vxc=", Vxc(1:5)
 end subroutine
 
 function get_Vh(R, Rp, rho) result(V)

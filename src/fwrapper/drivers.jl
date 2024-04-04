@@ -1,5 +1,5 @@
 function get_atom_orb(Z::Int64)::Int64
-    n = @ccall libDFTATOM.__drivers_MOD_get_atom_orb(Z::Ref{Int32})::Int64
+    n = @ccall libDFTATOM.__drivers_MOD_get_atom_orb(Z::Ref{Cint})::Int64
     n
 end
 
@@ -17,8 +17,8 @@ function atom_lda(Z, mesh; reigen_atol=1e-6, mixing_atol=1e-6, mixing_alpha=0.5,
     N = length(r)
 
     n_orbs = get_atom_orb(Z)
-    no = zeros(Int32, n_orbs)
-    lo = zeros(Int32, n_orbs)
+    no = zeros(Cint, n_orbs)
+    lo = zeros(Cint, n_orbs)
     fo = zeros(Float64, n_orbs)
     ks_energies = zeros(Float64, n_orbs)
     E_tot = Ref{Float64}(0.0)
@@ -29,7 +29,7 @@ function atom_lda(Z, mesh; reigen_atol=1e-6, mixing_atol=1e-6, mixing_alpha=0.5,
     orbitals = Array{Float64}(undef, N, n_orbs)
     
 
-    @ccall libDFTATOM.atom_lda(Z::Ref{Int32}, r_min::Ref{Float64}, r_max::Ref{Float64}, a::Ref{Float64}, N::Ref{Int32}, n_orbs::Ref{Int32}, no::Ptr{Int32}, lo::Ptr{Int32}, fo::Ptr{Float64}, ks_energies::Ptr{Float64}, E_tot::Ptr{Float64}, r::Ptr{Float64}, rp::Ptr{Float64}, V_tot::Ptr{Float64}, ρ::Ptr{Float64}, orbitals::Ptr{Float64}, reigen_atol::Ref{Float64}, reigen_max_iter::Ref{Int32}, mixing_atol::Ref{Float64}, mixing_alpha::Ref{Float64}, mixing_max_iter::Ref{Int32}, perturb::Ref{Cint})::Cvoid
+    @ccall libDFTATOM.atom_lda(Z::Ref{Cint}, r_min::Ref{Float64}, r_max::Ref{Float64}, a::Ref{Float64}, N::Ref{Cint}, n_orbs::Ref{Cint}, no::Ptr{Cint}, lo::Ptr{Cint}, fo::Ptr{Float64}, ks_energies::Ptr{Float64}, E_tot::Ptr{Float64}, r::Ptr{Float64}, rp::Ptr{Float64}, V_tot::Ptr{Float64}, ρ::Ptr{Float64}, orbitals::Ptr{Float64}, reigen_atol::Ref{Float64}, reigen_max_iter::Ref{Cint}, mixing_atol::Ref{Float64}, mixing_alpha::Ref{Float64}, mixing_max_iter::Ref{Cint}, perturb::Ref{Cint})::Cvoid
     info = (; E_tot=E_tot[], energies=ks_energies, ρ=ρ, orbitals=orbitals, V_tot=V_tot)
     info
 end
