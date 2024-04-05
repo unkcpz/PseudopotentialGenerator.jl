@@ -120,8 +120,9 @@ function schroed_inward_adams(l::Int64, E::Float64, V::Vector{Float64}, r::Vecto
     # find the start idx for the inward integration
     imax = findfirst(r .> rmax)
     if imax === nothing || imax - 1 > N - 4
-        # throw(ArgumentError("No enough starting points to integrate inward"))
-        imax = N-5
+        # This means the start points may not be enough
+        # But for now just ignore it and start from the end 4 points
+        imax = N-4
     else
         imax -= 1
     end

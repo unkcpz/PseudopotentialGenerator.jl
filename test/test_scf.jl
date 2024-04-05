@@ -28,7 +28,7 @@
     end
 
     orbs = regular_atom_orbitals(Z)
-    info = self_consistent_field(Z, mesh, orbs, mixing_beta=0.2, abstol=1e-7, maxiters=200)
+    info = self_consistent_field(Z, mesh, orbs, mixing_beta=0.2, abstol=1e-7, maxiters_scf=200, perturb=true)
 
     # Reference data from:
     # https://www.nist.gov/pml/atomic-reference-data-electronic-structure-calculations

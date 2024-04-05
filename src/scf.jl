@@ -27,7 +27,9 @@ mutable struct SavedStep
 end
 
 # define the SCF problem
-function self_consistent_field(Z::Int64, mesh::Mesh, orbs::Vector{Orbital}; mixing_beta::Float64=0.4, abstol::Float64=1e-6, maxiters::Int64=100)
+function self_consistent_field(
+    Z::Int64, mesh::Mesh, orbs::Vector{Orbital}; 
+    mixing_beta::Float64=0.4, abstol::Float64=1e-6, maxiters_scf::Int64=100, perturb::Bool=true, maxiters_eigersolver::Int64=1000)
     # use nonliear solver to solve the problem to find fixed point of: 
     # f_ks => residual(V) = KS(V) - V
 
@@ -43,7 +45,7 @@ function self_consistent_field(Z::Int64, mesh::Mesh, orbs::Vector{Orbital}; mixi
     
     # Parameters to define the atom status, which are parameters should not 
     # changing during the SCF iteration
-    params = (Z=Z, mesh=mesh, orbs=orbs, v_coulomb=v_coulomb)
+    params = (Z=Z, mesh=mesh, orbs=orbs, v_coulomb=v_coulomb, maxiters_eigersolver=maxiters_eigersolver, relativistic=false, perturb=perturb)
 
     # For storing the step information
     saved = SavedStep(r_size, length(orbs))
@@ -57,6 +59,9 @@ function self_consistent_field(Z::Int64, mesh::Mesh, orbs::Vector{Orbital}; mixi
     iter = 0
 
     function fixpoint_ks(vin, params)
+        # TODO: the problem that when using without perturb method,
+        # vin will be a vector of ForwardDiff.Dual
+        # not sure why this happens and how to fix it. Can be produce even with H. 
         ρ = v2ρ!(vin, params, saved)
         vout = ρ2v!(ρ, params, saved)
 
@@ -74,7 +79,7 @@ function self_consistent_field(Z::Int64, mesh::Mesh, orbs::Vector{Orbital}; mixi
     end
 
     prob = NonlinearProblem(fixpoint_ks, v0, params)
-    solve(prob, alg=NLsolveJL(; method=:anderson, beta=mixing_beta); abstol=abstol, maxiters=maxiters)
+    solve(prob, alg=NLsolveJL(; method=:anderson, beta=mixing_beta); abstol=abstol, maxiters=maxiters_scf)
 
     # total energy
     (; E_tot=saved.E_tot, v_tot=saved.v_tot, ρ=saved.ρ)
@@ -98,7 +103,7 @@ function v2ρ!(v_in::Vector{Float64}, p, saved)::Vector{Float64}
         Eini = saved.ε_lst[idx]
 
         v_tot = v_in + p.v_coulomb
-        ε, P, _, is_converged = solve_radial_eigenproblem(n, l, p.Z, v_tot, p.mesh; tol=1e-9, max_iter=1000, E_window=[Emin, Emax], E_ini = Eini, rel = false, perturb = true)
+        ε, P, _, is_converged = solve_radial_eigenproblem(n, l, p.Z, v_tot, p.mesh; tol=1e-9, max_iter=p.maxiters_eigersolver, E_window=[Emin, Emax], E_ini = Eini, rel = p.relativistic, perturb = p.perturb)
 
         if !is_converged
             throw(ArgumentError("Failed to solve the radial eigenproblem"))

@@ -72,6 +72,7 @@ function solve_radial_eigenproblem(n::Int64, l::Int64, Z::Int64, V::Vector{Float
 
             # converged
             # TODO: post-process the wave function
+            is_converged = true
             break
         end
 
