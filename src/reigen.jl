@@ -5,13 +5,13 @@ function solve_radial_eigenproblem(n::Int64, l::Int64, Z::Int64, V::Function, me
 
     E, Q, P, is_converged
 end
+
 function solve_radial_eigenproblem(n::Int64, l::Int64, Z::Int64, V::Vector{Float64}, mesh::Mesh; 
     tol=1e-9, max_iter=200, E_window=[-8000.0, -0.0], E_ini = -1000.0, rel = false, perturb = false)::Tuple{Float64, Vector{Float64}, Vector{Float64}, Bool}
     # TODO: add dirac solver
     N = length(mesh.r)
     P = zeros(Float64, N)
     Q = zeros(Float64, N)
-    c = SPEED_OF_LIGHT
     is_converged = false
 
     E = E_ini
@@ -25,7 +25,7 @@ function solve_radial_eigenproblem(n::Int64, l::Int64, Z::Int64, V::Vector{Float
         E = (Emin + Emax) / 2
     end
 
-    # shooting method
+    # PT method first then shooting method
     last_bisect = true
     for iter in 1:max_iter
         # TODO: write iteration log information
