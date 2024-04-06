@@ -1,4 +1,6 @@
 using Dierckx: Spline1D
+using Polynomials: Polynomial, fit, coeffs
+import Polynomials: derivative
 
 """
     Mesh
@@ -115,4 +117,50 @@ function mesh_exp_deriv2(r_min::Float64, r_max::Float64, a::Float64, N::Int64)::
     end
 
     rpp
+end
+
+# TODO: will spline interpolation be better?
+"""
+    derivative(f, mesh, idx)
+
+Compute the derivative of the function `f` at the point `idx` using the mesh `mesh`.
+By fit the polynomial to the function values at the points `idx-5:idx+5` and compute the derivative at the point `idx`.
+
+Can approximate the derivative to ~ 1e-8.
+"""
+function dfdr(f::Vector{Float64}, mesh::Mesh, idx::Int64)::Float64
+    if idx < 6 || idx > mesh.size - 6
+        throw(ArgumentError("The index must be greater than 6 and less than N-6"))
+    end
+
+    # Fit the polynomial
+    rs = mesh.r[idx-5:idx+5]
+    fs = f[idx-5:idx+5]
+    p = fit(rs, fs, 6) |> p -> round.(coeffs(p), digits=10) |> Polynomial
+
+    # Compute the derivative
+    dp = derivative(p)
+
+    dp(mesh.r[idx])
+end
+
+"""
+    d2fdr2(f, mesh, idx)
+
+Compute the second derivative of the function `f` at the point `idx` using the mesh `mesh`.
+"""
+function d2fdr2(f::Vector{Float64}, mesh::Mesh, idx::Int64)::Float64
+    if idx < 11 || idx > mesh.size - 11
+        throw(ArgumentError("The index must be greater than 6 and less than N-6"))
+    end
+
+    # Fit the polynomial
+    rs = mesh.r[idx-5:idx+5]
+    fs = f[idx-5:idx+5]
+    p = fit(rs, fs, 6) |> p -> round.(coeffs(p), digits=12) |> Polynomial
+
+    # Compute the derivative
+    dp = derivative(p, 2)
+
+    dp(mesh.r[idx])
 end

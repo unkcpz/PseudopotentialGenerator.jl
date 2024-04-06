@@ -81,8 +81,16 @@ function self_consistent_field(
     prob = NonlinearProblem(fixpoint_ks, v0, params)
     solve(prob, alg=NLsolveJL(; method=:anderson, beta=mixing_beta); abstol=abstol, maxiters=maxiters_scf)
 
-    # total energy
-    (; E_tot=saved.E_tot, v_tot=saved.v_tot, ρ=saved.ρ)
+    # wavefunction of every orbital
+    ϕs = Dict{NamedTuple{(:n, :l), Tuple{Int64, Int64}}, Vector{Float64}}()
+    ε_lst = Dict{NamedTuple{(:n, :l), Tuple{Int64, Int64}}, Float64}()
+    for (idx, orb) in enumerate(orbs)
+        ϕ = saved.Ys[idx, :]
+        ϕs[(n=orb.n, l=orb.l)] = ϕ
+        ε_lst[(n=orb.n, l=orb.l)] = saved.ε_lst[idx]
+    end
+
+    (; E_tot=saved.E_tot, v_tot=saved.v_tot, ρ=saved.ρ, ϕs=ϕs, ε_lst=ε_lst)
 end
 
 function v2ρ!(v_in::Vector{Float64}, p, saved)::Vector{Float64}

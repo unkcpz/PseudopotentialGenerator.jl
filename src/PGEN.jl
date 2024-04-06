@@ -12,7 +12,7 @@ include("ode1d.jl")
 export integrate, rk4_integrate
 
 include("mesh.jl")
-export Mesh, mesh_exp_deriv2, midpoints
+export Mesh, mesh_exp_deriv2, midpoints, dfdr, d2fdr2
 
 include("rschroed.jl")
 export schroed_outward_adams, schroed_inward_adams
@@ -28,5 +28,8 @@ export self_consistent_field
 
 include("rpoisson.jl")
 export rpoisson_outward_pc
+
+include("pseudolize.jl")
+export pseudolize
 
 end
