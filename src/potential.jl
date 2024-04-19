@@ -1,3 +1,16 @@
+abstract type Potential end
+
+struct SemiLocalPotential <: Potential
+    v::Dict{NamedTuple{(:n, :l), Tuple{Int64, Int64}}, Vector{Float64}}
+end
+
+struct KBFormPotential <: Potential
+    v_local::Vector{Float64}
+    ekb
+    proj_kb
+end
+
+# TODO: ? also make it a Potential type?
 function coulomb_potential(Z::Int64, r::Float64)::Float64
     return -Z / r
 end

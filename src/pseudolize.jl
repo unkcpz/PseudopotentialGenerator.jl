@@ -1,15 +1,108 @@
 using Polynomials
 
+"""
+    pseudolize(ϕ, ε, vae, mesh, rc; method=:TM)
+
+Pseudolize on the pseudo configurations. Loop over the orbitals and do the pseudolization.
+The function also manage to unscreened the pseudo potential and convert it to the 
+Kleinman-Bylander form.
+
+Methods supported:
+    - `:TM`: Troullier-Martins pseudopotential
+    - `:TM22`: (TODO) Troullier-Martins pseudopotential with 22 coefficients (doi:10.1088/1361-648X/aac85d)
+    - `:RRKJ`: (TODO) Rappe-Rabe-Kaxiras-Joannopoulos pseudopotential (https://doi.org/10.1103/PhysRevB.41.1227)
+    - `:BHS`: (TODO) Bachelet-Hamann-Schlüter pseudopotential (doi:10.1103/PhysRevB.26.4199)
+    - more...
+"""
 function pseudolize(
-    ϕ::Vector{Float64}, 
+    ae_info,    # TODO: type it
+    mesh::Mesh, 
+    rc::Dict{NamedTuple{(:n, :l), Tuple{Int64, Int64}}, Float64}; 
+    method=:TM,
+    kbform=true)::Potential
+
+    # To store the results from pseudolization for post processing
+    v_pspot_dict = Dict{NamedTuple{(:n, :l), Tuple{Int64, Int64}}, Vector{Float64}}()
+    ϕ_ps_dict = Dict{NamedTuple{(:n, :l), Tuple{Int64, Int64}}, Vector{Float64}}()
+
+    # loop over rc which defined the target orbitals to pseudolize
+    # The ϕs and εs are the all wavefunctions and eigenvalues from AE calculation
+    for (nl, _rc) in rc
+        ϕ = ae_info.ϕs[nl]
+        ε = ae_info.ε_lst[nl]
+        vae = ae_info.vae
+        v_pspot, ϕ_ps = pseudolize(nl, ϕ, ε, vae, mesh, _rc; method=method)
+        v_pspot_dict[nl] = v_pspot
+
+        # normalize the pseudo wavefunction and store it
+        ϕ_ps = ϕ_ps / sqrt(integrate(ϕ_ps .^ 2, mesh.r))
+        ϕ_ps_dict[nl] = ϕ_ps
+    end
+
+    # Unscreened the pseudo by subtracting vxc[ρ] and vh[ρ] from each v_pspot.
+    # ρ is ρ_ps charge density from the pseudo wavefunctions
+    # The pseudo-wave of every orbital is get from AE wave by "fitting" so for each of them the vxc and vh are counted.
+    # Note for myself to understanding, I was thinking substructing vxc and vh from every l is dupulicated, but it is correct. Consider if the v_pspot is the same as v_ae, then the potential will be counting multiple times. 
+
+    # compute the density from pseudo wavefunctions
+    ρ = zeros(Float64, length(mesh.r))
+    for (nl, ϕ_ps) in ϕ_ps_dict
+        @. ρ += ϕ_ps ^ 2 * ae_info.occs[nl]
+    end
+
+    # compute the vxc and vh from the pseudo density
+    vxc = compute_vxc(ρ, ae_info.xc)
+    vh = compute_vh(ρ, mesh)
+
+    # unscreen the pseudo potential
+    for k in keys(v_pspot_dict)
+        @. v_pspot_dict[k] -= vxc.v_xc + vh
+    end    
+
+    v_sl = SemiLocalPotential(v_pspot_dict)
+
+    if kbform
+        v_kb = sl2kb(v_sl)
+        return v_kb
+    else
+        return v_sl
+    end
+end
+
+function sl2kb(v_sl::SemiLocalPotential)::KBFormPotential
+    # Convert the semi-local potential to Kleinman-Bylander form
+
+    # The local potential can, in principle, be arbitrarily chosen, but since the summation of nonlocal part need to be truncated at some value of l, 
+    # the local potential should be chosen such that it adequately reproduces
+    #the atomic scattering for all the higher angularmomentum channels.
+    # TODO: more versatile way to choose the local potential, check https://arxiv.org/pdf/1811.00959.pdf see anything can be revived from the paper.
+    # use l=0 for the local potential for now
+    v_pspot_local = zeros(Float64, length(v_sl.v))
+    for (nl, v_pspot) in v_pspot_dict
+        if nl.l == 0
+            v_pspot_local .= v_pspot
+            break
+        end
+    end
+
+    # XXX ekb, proj_kb are not implemented yet
+end
+
+"""
+    pseudolize(nl, ϕ, ε, vae, mesh, rc; method=:TM)
+
+Pseudolize on the given orbital.
+"""
+function pseudolize(
     nl::NamedTuple{(:n, :l), Tuple{Int64, Int64}}, 
-    rc::Float64, 
-    εl::Float64,
+    ϕ::Vector{Float64}, 
+    ε::Float64,
     vae::Vector{Float64},
-    mesh::Mesh;
+    mesh::Mesh,
+    rc::Float64; 
     method=:TM)
     if method == :TM
-        v_pspot, ϕ_ps = pseudolize_TM(ϕ, nl, rc, εl, vae, mesh)
+        v_pspot, ϕ_ps = pseudolize_TM(nl, ϕ, ε, vae, mesh, rc)
     else
         throw(ArgumentError("Unsupported pseudolization method $method"))
     end
@@ -18,12 +111,12 @@ function pseudolize(
 end
 
 function pseudolize_TM(
-    ϕ::Vector{Float64}, 
     nl::NamedTuple{(:n, :l), Tuple{Int64, Int64}}, 
-    rc::Float64, 
-    εl::Float64,
+    ϕ::Vector{Float64}, 
+    ε::Float64,
     vae::Vector{Float64},
-    mesh::Mesh)
+    mesh::Mesh,
+    rc::Float64)
 
     # TODO: should add a checker for rc, if it is too large or too small
     # the NL solver may not converge
@@ -38,7 +131,7 @@ function pseudolize_TM(
     # TODO: log it and use more detailt message
     println("New rc is: ", rc)
 
-    # copy the ae wavefunction to ps wavefunction
+    # ϕ is the radial wavefunction R(r) in most paper representation
     rϕ = mesh.r .* ϕ
 
     # make sure the ps wavefunction at rc is positive
@@ -48,6 +141,7 @@ function pseudolize_TM(
         sign = -1.0
     end
 
+    # copy the ae wavefunction to ps wavefunction
     rϕ_ps = copy(rϕ)
 
     # Root finding for residual TM using NL solver
@@ -62,7 +156,7 @@ function pseudolize_TM(
         vprc = params.vprc
         vpprc = params.vpprc
         ae_norm = params.ae_norm
-        εl = params.εl
+        ε = params.ε
 
         # The last NL condition (29g)
         c4 = - c2 ^ 2 / (2 * nl.l + 5)
@@ -71,7 +165,7 @@ function pseudolize_TM(
         # equations (29b), (29c), (29d), (29e), (29f) of TM paper PhysRevB.43.1993
         # rhs(1) = log(prc/rc**(l+1))
         # rhs(2) =   prc'/prc - (l + 1)/rc
-        # rhs(3) =   2*(vrc - εl) - 2*(l + 1)/rc*rhs(2) - rhs(2)**2
+        # rhs(3) =   2*(vrc - ε) - 2*(l + 1)/rc*rhs(2) - rhs(2)**2
         # rhs(4) =   2*vprc + 2*(l + 1)/rc**2*rhs(2) - 2*(l + 1)/rc*rhs(3) - 2*rhs(2)*rhs(3)
         # rhs(5) =   2*vpprc - 4*(l + 1)/rc**3*rhs(2) + 4*(l + 1)/rc**2*rhs(3) - 2*(l + 1)/rc*rhs(4) - 2*rhs(3)**2 - 2*rhs(2)*rhs(4)
         prc = rϕ[ic]
@@ -79,7 +173,7 @@ function pseudolize_TM(
         rhs = zeros(Float64, 5)
         rhs[1] = log(prc / rc ^ (nl.l + 1))
         rhs[2] = dprc / prc - (nl.l + 1) / rc
-        rhs[3] = 2 * (vrc - εl) - 
+        rhs[3] = 2 * (vrc - ε) - 
                     2 * (nl.l + 1) / rc * rhs[2] - rhs[2] ^ 2
         rhs[4] = 2 * vprc + 2 * (nl.l + 1) / rc ^ 2 * rhs[2] - 
                     2 * (nl.l + 1) / rc * rhs[3] - 2 * rhs[2] * rhs[3]
@@ -125,7 +219,7 @@ function pseudolize_TM(
     ae_norm = integrate(rϕ[1:ic] .^ 2, mesh.r[1:ic])
     println("rϕ (ic): ", rϕ[ic])
 
-    params = (; ic=ic, rc=rc, vrc=vrc, vprc=vprc, vpprc=vpprc, ae_norm=ae_norm, εl=εl)
+    params = (; ic=ic, rc=rc, vrc=vrc, vprc=vprc, vpprc=vpprc, ae_norm=ae_norm, ε=ε)
 
     # The initial guess for c0, c12: coefficients that solved by nonliear solver
     cx0 = 0.0
@@ -145,7 +239,7 @@ function pseudolize_TM(
 
     # using p(x) to represent to avoid d2fdr2 with interpolation
     v_pspot = copy(vae)
-    @. v_pspot[1:ic] = εl + 
+    @. v_pspot[1:ic] = ε + 
             (nl.l + 1) * dpdx(mesh.r[1:ic]) / mesh.r[1:ic] + 
             (d2pdx2(mesh.r[1:ic]) + dpdx(mesh.r[1:ic]) ^ 2) / 2
 

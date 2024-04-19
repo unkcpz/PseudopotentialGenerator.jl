@@ -22,6 +22,7 @@ export solve_radial_eigenproblem
 
 include("potential.jl")
 export coulomb_potential, thomas_fermi_potential
+export SemiLocalPotential, KBFormPotential, Potential
 
 include("scf.jl")
 export self_consistent_field

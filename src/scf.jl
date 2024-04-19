@@ -2,6 +2,7 @@ using NonlinearSolve
 using NLsolve
 using Libxc: Functional, evaluate
 
+# Things mutated in the SCF iteration
 mutable struct SavedStep
     ε_lst::Vector{Float64}
     Ys::Matrix{Float64}
@@ -45,7 +46,16 @@ function self_consistent_field(
     
     # Parameters to define the atom status, which are parameters should not 
     # changing during the SCF iteration
-    params = (Z=Z, mesh=mesh, orbs=orbs, v_coulomb=v_coulomb, maxiters_eigersolver=maxiters_eigersolver, relativistic=false, perturb=perturb)
+    params = (
+        Z=Z, 
+        mesh=mesh, 
+        orbs=orbs, 
+        v_coulomb=v_coulomb, 
+        maxiters_eigersolver=maxiters_eigersolver, 
+        relativistic=false, 
+        perturb=perturb,
+        xc=:lda,
+    )
 
     # For storing the step information
     saved = SavedStep(r_size, length(orbs))
@@ -84,13 +94,16 @@ function self_consistent_field(
     # wavefunction of every orbital
     ϕs = Dict{NamedTuple{(:n, :l), Tuple{Int64, Int64}}, Vector{Float64}}()
     ε_lst = Dict{NamedTuple{(:n, :l), Tuple{Int64, Int64}}, Float64}()
+    occs = Dict{NamedTuple{(:n, :l), Tuple{Int64, Int64}}, Float64}()
     for (idx, orb) in enumerate(orbs)
         ϕ = saved.Ys[idx, :]
+        # TODO: consider to bundle ϕ and ε into a struct since they are always appear in pair
         ϕs[(n=orb.n, l=orb.l)] = ϕ
         ε_lst[(n=orb.n, l=orb.l)] = saved.ε_lst[idx]
+        occs[(n=orb.n, l=orb.l)] = orb.f
     end
 
-    (; E_tot=saved.E_tot, v_tot=saved.v_tot, ρ=saved.ρ, ϕs=ϕs, ε_lst=ε_lst)
+    (; E_tot=saved.E_tot, v_tot=saved.v_tot, ρ=saved.ρ, ϕs=ϕs, ε_lst=ε_lst, xc=params.xc, occs=occs)
 end
 
 function v2ρ!(v_in::Vector{Float64}, p, saved)::Vector{Float64}
@@ -138,7 +151,7 @@ function ρ2v!(ρ::Vector{Float64}, p, saved)::Vector{Float64}
     v_h = compute_vh(ρ, p.mesh)
     saved.v_h = v_h
 
-    res = compute_vxc(ρ, :lda)
+    res = compute_vxc(ρ, p.xc)
     v_xc = res.v_xc
     ε_xc = res.ε_xc
     saved.v_xc = v_xc
@@ -152,6 +165,7 @@ function ρ2v!(ρ::Vector{Float64}, p, saved)::Vector{Float64}
     v_out
 end
 
+# TODO: move vxc to a separate file
 function compute_vxc(ρ::Vector{Float64}, xc::Symbol)
     # compute the exchange-correlation potential
     if xc == :lda
@@ -166,9 +180,10 @@ function compute_vxc(ρ::Vector{Float64}, xc::Symbol)
 
     v_xc = result_x.vrho[:] + result_c.vrho[:]
     ε_xc = result_x.zk + result_c.zk
-    (; v_xc=v_xc, ε_xc=ε_xc)
+    (; v_xc=v_xc, ε_xc=ε_xc)    # TODO: renamed to v and ε?? xc seems redundant
 end
 
+# TODO: move vh to a separate file
 function compute_vh(ρ, mesh::Mesh)::Vector{Float64}
     # compute the Hartree potential
     vh = rpoisson_outward_pc(ρ, mesh)

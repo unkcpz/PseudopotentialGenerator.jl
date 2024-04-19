@@ -13,23 +13,28 @@ orbs = [
 
 # caching the result of array of each orbital to jls files
 # named with pseudo_test_Z_6_orb_<n>_<l>.jld2
-cached_filename = "pseudo_test_Z_6_orbs.jld2"
+cached_filename = "pseudo_test_Z_6_ae_info.jld2"
 if !isfile(cached_filename)
     res = self_consistent_field(Z, mesh, orbs, mixing_beta=0.2, abstol=1e-7, maxiters_scf=200, perturb=true)
 
-    Ys = zeros(Float64, length(orbs), length(mesh.r))
-    for (idx, orb) in enumerate(orbs)
-        ϕ = res.ϕs[(n=orb.n, l=orb.l)]
-        Ys[idx, :] = ϕ
-    end
-    @save cached_filename res
+    ae_info = (
+        ε_lst = res.ε_lst,
+        ϕs = res.ϕs,
+        vae = res.v_tot,
+        occs = res.occs,
+        xc = res.xc,
+    )
+    @save cached_filename ae_info
 else
-    @load cached_filename res
+    @load cached_filename ae_info
 end
 
-# TODO: rc for every l channels, it can be multiple rc
-# will only pseudolize on p orbital for test.
-rc = 2.0
+# rc for every orbital, pass as a dict
+# angular momentum => rc
+rc = Dict{NamedTuple{(:n, :l), Tuple{Int64, Int64}}, Float64}(
+    (n=2, l=0) => 2.0,
+    (n=2, l=1) => 1.9
+)
 
 # Check integration of ρ to inf is equal to Z
 # Check the wavefunction is normalized (∑ϕ^2 dr = Z)
@@ -38,24 +43,19 @@ rc = 2.0
 @testset "Pseudolize TM" begin
     using Plots
 
-    vae = res.v_tot
-    plot(mesh.r, vae, label="AE")
-
-    # add a vertical dash line to show the rc
-    vline!([rc], label="rc", linestyle=:dash)
-
-    for l in 0:1
-        nl = (; n=2, l=l)
-        εl = res.ε_lst[nl]
-        ϕ = res.ϕs[nl]
-
-        v_pspot, ϕ_ps = pseudolize(ϕ, nl, rc, εl, vae, mesh; method=:TM)    
-
-        plot!(mesh.r, v_pspot, label="pspot l=$l")
-    end
+    plot(mesh.r, ae_info.vae, label="AE")
     ylims!(-10, 10)
     xlims!(0, 20)
 
+    v_pspot = pseudolize(ae_info, mesh, rc; method=:TM, kbform=false)    
+
+    for nl in keys(rc)
+        vline!([rc[nl]], label="rc: l=$(nl.l)", linestyle=:dash)
+        plot!(mesh.r, v_pspot.v[nl], label="pspot l=$(nl.l)")
+    end
+
     # save it to file
     savefig("pseudolize_TM.png")
+
+    # TODO: consistency check the ps_pot will give the expected ps_wave
 end
