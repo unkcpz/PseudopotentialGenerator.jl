@@ -1,4 +1,4 @@
-using Polynomials
+using Polynomials: derivative
 
 """
     pseudolize(ϕ, ε, vae, mesh, rc; method=:TM)

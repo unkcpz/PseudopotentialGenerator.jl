@@ -33,4 +33,7 @@ export rpoisson_outward_pc
 include("pseudolize.jl")
 export pseudolize
 
+include("ld.jl")
+export compute_ld, compute_atanld
+
 end

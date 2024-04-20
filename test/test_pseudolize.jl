@@ -1,4 +1,5 @@
 using JLD2
+using Plots
 
 # AE results for different pseudolize methods
 # Only need to run once
@@ -41,7 +42,6 @@ rc = Dict{NamedTuple{(:n, :l), Tuple{Int64, Int64}}, Float64}(
 # plot the wavefunction and density
 
 @testset "Pseudolize TM" begin
-    using Plots
 
     plot(mesh.r, ae_info.vae, label="AE")
     ylims!(-10, 10)
@@ -57,5 +57,29 @@ rc = Dict{NamedTuple{(:n, :l), Tuple{Int64, Int64}}, Float64}(
     # save it to file
     savefig("pseudolize_TM.png")
 
-    # TODO: consistency check the ps_pot will give the expected ps_wave
+    # Plot arctan logder and compare with AE
+    # start a new plot
+    plot()
+
+    # Define different color for each l
+    colors = Dict(
+        0 => :red,
+        1 => :blue,
+        2 => :green,
+        3 => :orange,
+        4 => :purple,
+    )
+
+    rcx = 2.0 # the r cut to compute atan logder
+    for nl in keys(rc)
+        l = nl.l
+        x_ae, y_ae = compute_atanld(l, Z, mesh, ae_info.vae, rcx, window=[-10.0, 10.0], δ=0.05)
+        plot!(x_ae, y_ae, label="AE: l = $l", linestyle=:dash, color=colors[l])
+
+        x_ps, y_ps = compute_atanld(l, Z, mesh, v_pspot.v[nl], rcx, window=[-10.0, 10.0], δ=0.05)
+        plot!(x_ps, y_ps, label="PS: l = $l", color=colors[l])
+    end
+
+    ylims!(-10, 10)
+    savefig("atanlogder_TM_SL.png")
 end
