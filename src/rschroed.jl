@@ -1,3 +1,7 @@
+using DifferentialEquations
+
+SOLVER = ABM54()
+
 function sch_inward(l::Int64, E::Float64, V::Vector{Float64}, r::Vector{Float64}, rp::Vector{Float64}; max_val::Float64=1e+6)::Tuple{Vector{Float64}, Vector{Float64}, Int64}
     C = @. 2 * (V - E) + l*(l+1) / r^2
 
@@ -26,15 +30,21 @@ function sch_inward(l::Int64, E::Float64, V::Vector{Float64}, r::Vector{Float64}
     u1 = exp(-χ * r[imax] + χ * r[1])
     u2 = -χ * u1
     u0 = [u1, u2]
-    println("u0 myinward: ", u0)
-    println("my imax: ", imax) 
+
+    Cmid = midpoints(C, r)
+    rp_mid = midpoints(rp, r)
 
     # u1p = u2 * rp
     # u2p = C * u1 * rp
     function f!(du, u, _p, t)
-        _t = round(Int, t)
-        du[1] = u[2] * rp[_t]
-        du[2] = C[_t] * u[1] * rp[_t]
+        _t = floor(Int, t)
+        if _t == t
+            du[1] = u[2] * rp[_t]
+            du[2] = C[_t] * u[1] * rp[_t]
+        else
+            du[1] = u[2] * rp_mid[_t]
+            du[2] = Cmid[_t] * u[1] * rp_mid[_t]
+        end
         nothing
     end
 
@@ -51,7 +61,7 @@ function sch_inward(l::Int64, E::Float64, V::Vector{Float64}, r::Vector{Float64}
     cb = DiscreteCallback(condition, affect!)
 
     prob = DiscreteProblem(f!, u0, (imax, 1))
-    sol = solve(prob, Tsit5(), dt=-1, adaptive=false, callback=cb)
+    sol = solve(prob, SOLVER, dt=-1, adaptive=false, callback=cb)
 
     P = zeros(Float64, N)
     Q = zeros(Float64, N)
@@ -79,13 +89,20 @@ function sch_outward(l::Int64, Z::Int64, E::Float64, V::Vector{Float64}, r::Vect
     end
     u0 = [y0 * r[1], yp0 * r[1] + y0]
 
+    Cmid = midpoints(C, r)
+    rp_mid = midpoints(rp, r)
 
     # u1p = u2 * rp
     # u2p = C * u1 * rp
     function f!(du, u, _p, t)
-        _t = round(Int, t)
-        du[1] = u[2] * rp[_t]
-        du[2] = C[_t] * u[1] * rp[_t]
+        _t = floor(Int, t)
+        if _t == t
+            du[1] = u[2] * rp[_t]
+            du[2] = C[_t] * u[1] * rp[_t]
+        else
+            du[1] = u[2] * rp_mid[_t]
+            du[2] = Cmid[_t] * u[1] * rp_mid[_t]
+        end
         nothing
     end
 
@@ -102,7 +119,7 @@ function sch_outward(l::Int64, Z::Int64, E::Float64, V::Vector{Float64}, r::Vect
     cb = DiscreteCallback(condition, affect!)
 
     prob = DiscreteProblem(f!, u0, (1, N-1))
-    sol = solve(prob, Tsit5(), dt=1, adaptive=false, callback=cb)
+    sol = solve(prob, SOLVER, dt=1, adaptive=false, callback=cb)
 
     P = zeros(Float64, N)
     Q = zeros(Float64, N)
@@ -248,9 +265,6 @@ function schroed_inward_adams(l::Int64, E::Float64, V::Vector{Float64}, r::Vecto
     @. u2[imax:imax+4] = -χ * u1[imax:imax+4]
     @. u1p[imax:imax+4] = rp[imax:imax+4] * u2[imax:imax+4]
     @. u2p[imax:imax+4] = rp[imax:imax+4] * C[imax:imax+4] * u1[imax:imax+4]
-
-    println("u0 hisinward: ", [u1[imax], u2[imax]])
-    println("his imax: ", imax)
 
     imin = 1
     for i in imax:-1:2

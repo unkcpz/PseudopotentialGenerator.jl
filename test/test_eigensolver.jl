@@ -1,16 +1,16 @@
 @testset "reigen norel" begin
     # Hydrogen-like atom
-    Z = 3
+    Z = 6
     using Plots
     using Colors
 
     palette = distinguishable_colors(10)  # Generate 10 distinct colors
 
     plot()
-    for perturb in [false], n in 1:2, l in 0:n-1
+    for perturb in [true], n in 1:2, l in 0:n-1
     #for perturb in [true], n in 1:1, l in 0:n-1
         E_exact = -Z^2 / (2.0 * n^2)
-        mesh = Mesh(1e-8, 50.0, 1e+7, 20000)
+        mesh = Mesh(1e-8, 50.0, 1e+6, 5000)
         V(r) = -Z / r
         E_window = [-5000.0, -0.0]
         E_init = -1000.0
@@ -25,6 +25,7 @@
         color = palette[rand(1:10)]
 
         plot!(mesh.r, P, label="n = $n, l = $l", color=color)
+        xlims!(0, 5)
         # plot vertical line at ctp
         vline!([mesh.r[ctp]], label="ctp: n=$n, l=$l", linestyle=:dash, color=color)
         savefig("test.png")

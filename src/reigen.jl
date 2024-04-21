@@ -120,8 +120,7 @@ function solve_radial_eigenproblem(n::Int64, l::Int64, Z::Int64, V::Vector{Float
         # inward integration
         P_inward = zeros(Float64, N)
         Q_inward = zeros(Float64, N)
-        #P_inward[ctp:end], Q_inward[ctp:end], imin = sch_inward(l, E, V[ctp:end], mesh.r[ctp:end], mesh.rp[ctp:end])
-        P_inward[ctp:end], Q_inward[ctp:end], imin = sch_inward(l, E, V[ctp:end], mesh.r[ctp:end], mesh.rp[ctp:end])
+        P_inward[ctp:end], Q_inward[ctp:end], imin = schroed_inward_adams(l, E, V[ctp:end], mesh.r[ctp:end], mesh.rp[ctp:end])
         if imin > 1
             # The inward integration to reach the turning point, diverged
             @warn "Inward integration to reach the turning point diverged."

@@ -23,36 +23,38 @@ struct Mesh
     r_max::Float64
     a::Float64
     _N::Int64
-    size::Int64
+    N::Int64
     r::Vector{Float64}
     rp::Vector{Float64}
     function Mesh(r_min::Float64, r_max::Float64, a::Float64, N::Int64)
-        r = zeros(Float64, N+1)
-        rp = zeros(Float64, N+1)
+        r = zeros(Float64, N)
+        rp = zeros(Float64, N)
+
+        N_intervals = N - 1
 
         if a < 0
             throw(ArgumentError("require a > 0"))
         elseif (abs(a - 1) < eps(typeof(a)))
             # Uniform grid if a = 1
-            r = range(r_min, r_max, length=N+1)
-            rp = fill((r_max - r_min) / N, N+1)
+            r = range(r_min, r_max, length=N)
+            rp = fill((r_max - r_min) / N_intervals, N)
         else
             # Exponential grid
-            if (N > 1)
-                beta = log(a) / (N - 1)
-                alpha = (r_max - r_min) / (exp(beta * N) - 1)
-                for i = 1:N+1
+            if (N_intervals > 1)
+                beta = log(a) / (N_intervals - 1)
+                alpha = (r_max - r_min) / (exp(beta * N_intervals) - 1)
+                for i = 1:N
                     r[i] = r_min + alpha * (exp(beta * (i - 1)) - 1)
                     rp[i] = alpha * beta * exp(beta * (i - 1))
                 end
-            elseif N == 1
+            elseif N_intervals == 1
                 r = [r_min, r_max]
             else
                 throw(ArgumentError("require N > 0"))
             end
         end
 
-        new(r_min, r_max, a, N, N+1, r, rp)
+        new(r_min, r_max, a, N_intervals, N, r, rp)
     end
 end
 
@@ -129,7 +131,7 @@ By fit the polynomial to the function values at the points `idx-5:idx+5` and com
 Can approximate the derivative to ~ 1e-8.
 """
 function dfdr(f::Vector{Float64}, mesh::Mesh, idx::Int64)::Float64
-    if idx < 6 || idx > mesh.size - 6
+    if idx < 6 || idx > mesh.N - 6
         throw(ArgumentError("The index must be greater than 6 and less than N-6"))
     end
 
@@ -150,7 +152,7 @@ end
 Compute the second derivative of the function `f` at the point `idx` using the mesh `mesh`.
 """
 function d2fdr2(f::Vector{Float64}, mesh::Mesh, idx::Int64)::Float64
-    if idx < 11 || idx > mesh.size - 11
+    if idx < 11 || idx > mesh.N - 11
         throw(ArgumentError("The index must be greater than 6 and less than N-6"))
     end
 

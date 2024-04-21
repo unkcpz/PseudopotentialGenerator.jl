@@ -42,7 +42,6 @@ function poisson_outward(ρ::Vector{Float64}, r::Vector{Float64}, rp::Vector{Flo
     function poisson!(du, u, _p, t)
         du[1] = u[2] * rp_u(t)
         du[2] = -(4π * ρ_u(t) + 2 * u[1] / r_u(t)) * rp_u(t)
-        println("u: ", u)
         nothing
     end
 
@@ -106,7 +105,6 @@ function rpoisson_outward_pc(ρ::Vector{Float64}, r::Vector{Float64}, rp::Vector
         end
     end
 
-    println("u1: $u1, u1p: $u1p")
     u1
 end
 
