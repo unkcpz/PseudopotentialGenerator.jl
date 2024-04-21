@@ -35,7 +35,7 @@ struct Mesh
         elseif (abs(a - 1) < eps(typeof(a)))
             # Uniform grid if a = 1
             r = range(r_min, r_max, length=N+1)
-            # rp = 0 for all i
+            rp = fill((r_max - r_min) / N, N+1)
         else
             # Exponential grid
             if (N > 1)

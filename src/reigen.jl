@@ -1,13 +1,13 @@
 function solve_radial_eigenproblem(n::Int64, l::Int64, Z::Int64, V::Function, mesh::Mesh; 
-    tol=1e-9, max_iter=200, E_window=[-8000.0, -0.0], E_ini = -1000.0, rel = false, perturb = false)::Tuple{Float64, Vector{Float64}, Vector{Float64}, Bool}
+    tol=1e-9, max_iter=200, E_window=[-8000.0, -0.0], E_ini = -1000.0, rel = false, perturb = false, normalize=true)::Tuple{Float64, Vector{Float64}, Vector{Float64}, Bool}
     V = V.(mesh.r)
-    E, Q, P, is_converged = solve_radial_eigenproblem(n, l, Z, V, mesh; tol=tol, max_iter=max_iter, E_window=E_window, E_ini = E_ini, rel = rel, perturb = perturb)
+    E, Q, P, is_converged = solve_radial_eigenproblem(n, l, Z, V, mesh; tol=tol, max_iter=max_iter, E_window=E_window, E_ini = E_ini, rel = rel, perturb = perturb, normalize=normalize)
 
     E, Q, P, is_converged
 end
 
 function solve_radial_eigenproblem(n::Int64, l::Int64, Z::Int64, V::Vector{Float64}, mesh::Mesh; 
-    tol=1e-9, max_iter=200, E_window=[-8000.0, -0.0], E_ini = -1000.0, rel = false, perturb = false)::Tuple{Float64, Vector{Float64}, Vector{Float64}, Bool}
+    tol=1e-9, max_iter=200, E_window=[-8000.0, -0.0], E_ini = -1000.0, rel = false, perturb = false, normalize=true)::Tuple{Float64, Vector{Float64}, Vector{Float64}, Bool}
     # TODO: add dirac solver
     N = length(mesh.r)
     P = zeros(Float64, N)
@@ -24,6 +24,8 @@ function solve_radial_eigenproblem(n::Int64, l::Int64, Z::Int64, V::Vector{Float
     if (E > Emax) || (E < Emin)
         E = (Emin + Emax) / 2
     end
+
+    Vinner = @. V + l*(l+1) / (2 * mesh.r^2)
 
     # PT method first then shooting method
     last_bisect = true
@@ -78,8 +80,7 @@ function solve_radial_eigenproblem(n::Int64, l::Int64, Z::Int64, V::Vector{Float
 
         # Beyond the turning point, meaning the partical is classically forbidden
         # The wave function exponentially decays. 
-        Vp = @. V + l*(l+1) / (2 * mesh.r^2)
-        ctp = find_ctp(Vp, E)
+        ctp = find_ctp(Vinner, E)
 
         if !perturb
             ctp = N
@@ -119,7 +120,8 @@ function solve_radial_eigenproblem(n::Int64, l::Int64, Z::Int64, V::Vector{Float
         # inward integration
         P_inward = zeros(Float64, N)
         Q_inward = zeros(Float64, N)
-        P_inward[ctp:end], Q_inward[ctp:end], imin = schroed_inward_adams(l, E, V[ctp:end], mesh.r[ctp:end], mesh.rp[ctp:end])
+        #P_inward[ctp:end], Q_inward[ctp:end], imin = sch_inward(l, E, V[ctp:end], mesh.r[ctp:end], mesh.rp[ctp:end])
+        P_inward[ctp:end], Q_inward[ctp:end], imin = sch_inward(l, E, V[ctp:end], mesh.r[ctp:end], mesh.rp[ctp:end])
         if imin > 1
             # The inward integration to reach the turning point, diverged
             @warn "Inward integration to reach the turning point diverged."
@@ -169,14 +171,16 @@ function solve_radial_eigenproblem(n::Int64, l::Int64, Z::Int64, V::Vector{Float
     end
 
     # Normarlize the wave function
-    S = integrate(P .^ 2, mesh.rp, method=:trapz7)
-    S = sqrt(abs(S))
+    if normalize
+        S = integrate(P .^ 2, mesh.rp, method=:trapz7)
+        S = sqrt(abs(S))
 
-    if S > 0
-        P /= S
-        Q /= S
-    else
-        throw(ArgumentError("Wave function is too small, S = $S"))
+        if S > 0
+            P /= S
+            Q /= S
+        else
+            throw(ArgumentError("Wave function is too small, S = $S"))
+        end
     end
 
     E, P, Q, is_converged

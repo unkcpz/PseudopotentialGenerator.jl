@@ -1,3 +1,120 @@
+function sch_inward(l::Int64, E::Float64, V::Vector{Float64}, r::Vector{Float64}, rp::Vector{Float64}; max_val::Float64=1e+6)::Tuple{Vector{Float64}, Vector{Float64}, Int64}
+    C = @. 2 * (V - E) + l*(l+1) / r^2
+
+    # For large r, the asymptotic is:
+    # P(r) = exp(-χ * r)
+    # Q(r) = -χ * P(R)
+    # where χ = √(-2 * E)
+    χ = sqrt(-2 * E)
+
+    # The rmax should not be too large to avoid numerical instability
+    # but should be large enough to reach the asymptotic region
+    # We make it by apply: exp(-χ * (rmax-rmin)) ~ eps(Float64)
+    rmax = r[1] - log(eps(Float64)) / χ
+
+    # find the start idx for the inward integration
+    imax = findfirst(r .> rmax)
+    if imax === nothing
+        # This means the start points may not be enough
+        # Use the last points anyway to start the integration
+        imax = N - 1
+    else
+        imax -= 1
+    end
+
+    # Boundary condition
+    u1 = exp(-χ * r[imax] + χ * r[1])
+    u2 = -χ * u1
+    u0 = [u1, u2]
+    println("u0 myinward: ", u0)
+    println("my imax: ", imax) 
+
+    # u1p = u2 * rp
+    # u2p = C * u1 * rp
+    function f!(du, u, _p, t)
+        _t = round(Int, t)
+        du[1] = u[2] * rp[_t]
+        du[2] = C[_t] * u[1] * rp[_t]
+        nothing
+    end
+
+    N = length(r)
+
+    function condition(u, t, integrator)
+        abs(u[1]) > max_val || abs(u[2]) > max_val
+    end
+
+    function affect!(integrator)
+        terminate!(integrator)
+    end
+
+    cb = DiscreteCallback(condition, affect!)
+
+    prob = DiscreteProblem(f!, u0, (imax, 1))
+    sol = solve(prob, Tsit5(), dt=-1, adaptive=false, callback=cb)
+
+    P = zeros(Float64, N)
+    Q = zeros(Float64, N)
+
+    imax = length(sol[1, :])
+
+    # the integration is from max -> ctp, so we need to reverse the result
+    P[1:imax] .= reverse(sol[1, :])
+    Q[1:imax] .= reverse(sol[2, :])
+
+    P, Q, imax
+end
+
+function sch_outward(l::Int64, Z::Int64, E::Float64, V::Vector{Float64}, r::Vector{Float64}, rp::Vector{Float64}; max_val::Float64=1e+6)::Tuple{Vector{Float64}, Vector{Float64}, Int64}
+    C = @. 2 * (V - E) + l*(l+1) / r^2
+
+    # Boundary condition
+    rmin = r[1]
+    if l == 0
+        y0 = 1 - Z * rmin
+        yp0 = -Z
+    else
+        y0 = rmin ^ l
+        yp0 = l * rmin ^ (l - 1)
+    end
+    u0 = [y0 * r[1], yp0 * r[1] + y0]
+
+
+    # u1p = u2 * rp
+    # u2p = C * u1 * rp
+    function f!(du, u, _p, t)
+        _t = round(Int, t)
+        du[1] = u[2] * rp[_t]
+        du[2] = C[_t] * u[1] * rp[_t]
+        nothing
+    end
+
+    N = length(r)
+
+    function condition(u, t, integrator)
+        abs(u[1]) > max_val || abs(u[2]) > max_val
+    end
+
+    function affect!(integrator)
+        terminate!(integrator)
+    end
+
+    cb = DiscreteCallback(condition, affect!)
+
+    prob = DiscreteProblem(f!, u0, (1, N-1))
+    sol = solve(prob, Tsit5(), dt=1, adaptive=false, callback=cb)
+
+    P = zeros(Float64, N)
+    Q = zeros(Float64, N)
+
+    imax = length(sol[1, :])
+
+    P[1:imax] .= sol[1, :]
+    Q[1:imax] .= sol[2, :]
+
+    P, Q, imax
+end
+
 """
     schroed_outward_adams(l, Z, E, V, r, rp; max_val=1e+6)
 
@@ -19,8 +136,8 @@ V is a vector.
 """
 function schroed_outward_adams(l::Int64, Z::Int64, E::Float64, V::Vector{Float64}, r::Vector{Float64}, rp::Vector{Float64}; max_val::Float64=1e+6)::Tuple{Vector{Float64}, Vector{Float64}, Int64}
     N = length(r)
-    u1 = zeros(Float64, N)  # Q
-    u2 = zeros(Float64, N)  # P
+    u1 = zeros(Float64, N)  # P
+    u2 = zeros(Float64, N)  # Q
     u1p = zeros(Float64, N)
     u2p = zeros(Float64, N)
 
@@ -95,8 +212,8 @@ Integrate the Schrödinger equation inward using the Adams method.
 """
 function schroed_inward_adams(l::Int64, E::Float64, V::Vector{Float64}, r::Vector{Float64}, rp::Vector{Float64}; max_val::Float64=1e+300)::Tuple{Vector{Float64}, Vector{Float64}, Int64}
     N = length(r)
-    u1 = zeros(Float64, N)  # Q
-    u2 = zeros(Float64, N)  # P
+    u1 = zeros(Float64, N)  # P
+    u2 = zeros(Float64, N)  # Q
     u1p = zeros(Float64, N)
     u2p = zeros(Float64, N)
 
@@ -131,6 +248,9 @@ function schroed_inward_adams(l::Int64, E::Float64, V::Vector{Float64}, r::Vecto
     @. u2[imax:imax+4] = -χ * u1[imax:imax+4]
     @. u1p[imax:imax+4] = rp[imax:imax+4] * u2[imax:imax+4]
     @. u2p[imax:imax+4] = rp[imax:imax+4] * C[imax:imax+4] * u1[imax:imax+4]
+
+    println("u0 hisinward: ", [u1[imax], u2[imax]])
+    println("his imax: ", imax)
 
     imin = 1
     for i in imax:-1:2
