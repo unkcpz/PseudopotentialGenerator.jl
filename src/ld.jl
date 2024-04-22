@@ -7,8 +7,7 @@ function compute_ld(l::Int, Z::Int, ε::Float64, mesh::Mesh, vae::Vector{Float64
     ic = findfirst(r -> r > rc, mesh.r) - 1
     rc = mesh.r[ic]
 
-    # TODO: make the final integrat point setable to save time
-    P, Q, _ = schroed_outward_adams(l, Z, ε, vae, mesh.r, mesh.rp)
+    P, Q, _ = sch_outward(l, Z, ε, vae, mesh.r, mesh.rp)
 
     # Normarlize the wave function
     S = integrate(P .^ 2, mesh.rp, method=:trapz7)

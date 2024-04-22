@@ -57,7 +57,7 @@ function solve_radial_eigenproblem(n::Int64, l::Int64, Z::Int64, V::Vector{Float
 
             # check if the wave function is not monotonic
             # if it is monotonic, it has no peak
-            P, Q, imax = schroed_outward_adams(l, Z, E, V, mesh.r, mesh.rp)
+            P, Q, imax = sch_outward(l, Z, E, V, mesh.r, mesh.rp)
             minidx = get_min_idx(P[1:imax])
             #if is_monotonic(P[1:imax])
             if  minidx <=0
@@ -94,7 +94,7 @@ function solve_radial_eigenproblem(n::Int64, l::Int64, Z::Int64, V::Vector{Float
         end
 
         # outward integration
-        P[1:ctp], Q[1:ctp], imax = schroed_outward_adams(l, Z, E, V[1:ctp], mesh.r[1:ctp], mesh.rp[1:ctp])
+        P[1:ctp], Q[1:ctp], imax = sch_outward(l, Z, E, V[1:ctp], mesh.r[1:ctp], mesh.rp[1:ctp])
         nnodes = count_nodes(P[1:imax])
 
         if nnodes != n - l - 1 || ctp == N || imax < ctp
