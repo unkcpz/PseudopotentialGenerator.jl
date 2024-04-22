@@ -21,23 +21,25 @@ function sch_outward(l::Int64, Z::Int64, E::Float64, V::Vector{Float64}, r::Vect
     # solution diverged. The reason maybe the interval is too large while the interpolation 
     # is not accurate enough.
     # TODO: rethink how to precisely define the "mid" points
-    r_mid = midpoints(r)
-    rp_mid = r[2:end] - r[1:end-1]
-    #rp_mid = sqrt.(rp[1:end-1] .* rp[2:end])    # Only for exponential mesh, compare with rp_mid above, err < 1e-10, not help
-    V_mid = midpoints(V, r)
-    C_mid = @. 2 * (V_mid - E) + l*(l+1) / r_mid^2
+    rmids = midpoints(r)
+    Vmids = midpoints(V, r)
+    Cmids = @. 2 * (Vmids - E) + l*(l+1) / rmids^2
+    rpmids = r[2:end] - r[1:end-1]
+    # TRY??: rp_mid = sqrt.(rp[1:end-1] .* rp[2:end])    # Only for exponential mesh, compare with rp_mid above, err < 1e-10, not help
 
     # u1p = u2 * rp
     # u2p = C * u1 * rp
     function f!(du, u, _p, t)
         _t = floor(Int, t)
         if _t == t
-            du[1] = u[2] * rp[_t]
-            du[2] = C[_t] * u[1] * rp[_t]
+            rpt = rp[_t]
+            Ct = C[_t]
         else
-            du[1] = u[2] * rp_mid[_t]
-            du[2] = C_mid[_t] * u[1] * rp_mid[_t]
+            rpt = rpmids[_t]
+            Ct = Cmids[_t]
         end
+        du[1] = u[2] * rpt
+        du[2] = Ct * u[1] * rpt
         nothing
     end
 
@@ -96,22 +98,25 @@ function sch_inward(l::Int64, E::Float64, V::Vector{Float64}, r::Vector{Float64}
     u2 = -χ * u1
     u0 = [u1, u2]
 
-    r_mid = midpoints(r)
-    rp_mid = r[2:end] .- r[1:end-1]
-    V_mid = midpoints(V, r)
-    C_mid = @. 2 * (V_mid - E) + l*(l+1) / r_mid^2
+    rmids = midpoints(r)
+    Vmids = midpoints(V, r)
+    Cmids = @. 2 * (Vmids - E) + l*(l+1) / rmids^2
+    rpmids = r[2:end] - r[1:end-1]
+    # TRY??: rp_mid = sqrt.(rp[1:end-1] .* rp[2:end])    # Only for exponential mesh, compare with rp_mid above, err < 1e-10, not help
 
     # u1p = u2 * rp
     # u2p = C * u1 * rp
     function f!(du, u, _p, t)
         _t = floor(Int, t)
         if _t == t
-            du[1] = u[2] * rp[_t]
-            du[2] = C[_t] * u[1] * rp[_t]
+            rpt = rp[_t]
+            Ct = C[_t]
         else
-            du[1] = u[2] * rp_mid[_t]
-            du[2] = C_mid[_t] * u[1] * rp_mid[_t]
+            rpt = rpmids[_t]
+            Ct = Cmids[_t]
         end
+        du[1] = u[2] * rpt
+        du[2] = Ct * u[1] * rpt
         nothing
     end
 
