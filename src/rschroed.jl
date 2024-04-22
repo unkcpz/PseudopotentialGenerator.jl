@@ -1,6 +1,71 @@
 using DifferentialEquations
 
-SOLVER = ABM54()
+function sch_outward(l::Int64, Z::Int64, E::Float64, V::Vector{Float64}, r::Vector{Float64}, rp::Vector{Float64}; max_val::Float64=1e+6)::Tuple{Vector{Float64}, Vector{Float64}, Int64}
+    C = @. 2 * (V - E) + l*(l+1) / r^2
+
+    # Boundary condition
+    # P0 = r ** (l + 1)
+    # Q0 = (l + 1) * r ** l
+    rmin = r[1]
+    if l == 0
+        y0 = 1 - Z * rmin
+        yp0 = -Z
+    else
+        y0 = rmin ^ l
+        yp0 = l * rmin ^ (l - 1)
+    end
+    u0 = [y0 * rmin, yp0 * rmin + y0]
+
+    # Compare to dftatom RK4+adams ode solver, this still not stable at large r when rmax is 
+    # too large, for Z=92 the coulomb potential is fine with rmax=20, but for rmax=50, the 
+    # solution diverged. The reason maybe the interval is too large while the interpolation 
+    # is not accurate enough.
+    # TODO: rethink how to precisely define the "mid" points
+    r_mid = midpoints(r)
+    rp_mid = r[2:end] - r[1:end-1]
+    #rp_mid = sqrt.(rp[1:end-1] .* rp[2:end])    # Only for exponential mesh, compare with rp_mid above, err < 1e-10, not help
+    V_mid = midpoints(V, r)
+    C_mid = @. 2 * (V_mid - E) + l*(l+1) / r_mid^2
+
+    # u1p = u2 * rp
+    # u2p = C * u1 * rp
+    function f!(du, u, _p, t)
+        _t = floor(Int, t)
+        if _t == t
+            du[1] = u[2] * rp[_t]
+            du[2] = C[_t] * u[1] * rp[_t]
+        else
+            du[1] = u[2] * rp_mid[_t]
+            du[2] = C_mid[_t] * u[1] * rp_mid[_t]
+        end
+        nothing
+    end
+
+    N = length(r)
+
+    function condition(u, t, integrator)
+        abs(u[1]) > max_val || abs(u[2]) > max_val
+    end
+
+    function affect!(integrator)
+        terminate!(integrator)
+    end
+
+    cb = DiscreteCallback(condition, affect!)
+
+    prob = DiscreteProblem(f!, u0, (1, N))
+    sol = solve(prob, ABM54(), dt=1, adaptive=false, callback=cb)
+
+    P = zeros(Float64, N)
+    Q = zeros(Float64, N)
+
+    imax = length(sol[1, :])
+
+    P[1:imax] .= sol[1, :]
+    Q[1:imax] .= sol[2, :]
+
+    P, Q, imax
+end
 
 function sch_inward(l::Int64, E::Float64, V::Vector{Float64}, r::Vector{Float64}, rp::Vector{Float64}; max_val::Float64=1e+6)::Tuple{Vector{Float64}, Vector{Float64}, Int64}
     C = @. 2 * (V - E) + l*(l+1) / r^2
@@ -21,7 +86,7 @@ function sch_inward(l::Int64, E::Float64, V::Vector{Float64}, r::Vector{Float64}
     if imax === nothing
         # This means the start points may not be enough
         # Use the last points anyway to start the integration
-        imax = N - 1
+        imax = length(r) - 1
     else
         imax -= 1
     end
@@ -31,8 +96,10 @@ function sch_inward(l::Int64, E::Float64, V::Vector{Float64}, r::Vector{Float64}
     u2 = -χ * u1
     u0 = [u1, u2]
 
-    Cmid = midpoints(C, r)
-    rp_mid = midpoints(rp, r)
+    r_mid = midpoints(r)
+    rp_mid = r[2:end] .- r[1:end-1]
+    V_mid = midpoints(V, r)
+    C_mid = @. 2 * (V_mid - E) + l*(l+1) / r_mid^2
 
     # u1p = u2 * rp
     # u2p = C * u1 * rp
@@ -43,12 +110,10 @@ function sch_inward(l::Int64, E::Float64, V::Vector{Float64}, r::Vector{Float64}
             du[2] = C[_t] * u[1] * rp[_t]
         else
             du[1] = u[2] * rp_mid[_t]
-            du[2] = Cmid[_t] * u[1] * rp_mid[_t]
+            du[2] = C_mid[_t] * u[1] * rp_mid[_t]
         end
         nothing
     end
-
-    N = length(r)
 
     function condition(u, t, integrator)
         abs(u[1]) > max_val || abs(u[2]) > max_val
@@ -61,76 +126,21 @@ function sch_inward(l::Int64, E::Float64, V::Vector{Float64}, r::Vector{Float64}
     cb = DiscreteCallback(condition, affect!)
 
     prob = DiscreteProblem(f!, u0, (imax, 1))
-    sol = solve(prob, SOLVER, dt=-1, adaptive=false, callback=cb)
+    sol = solve(prob, ABM54(), dt=-1, adaptive=false, callback=cb)
 
-    P = zeros(Float64, N)
-    Q = zeros(Float64, N)
+    P = zeros(Float64, length(r))
+    Q = zeros(Float64, length(r))
 
-    imax = length(sol[1, :])
+    n = length(sol[1, :])
+    imin = imax - n + 1
 
     # the integration is from max -> ctp, so we need to reverse the result
-    P[1:imax] .= reverse(sol[1, :])
-    Q[1:imax] .= reverse(sol[2, :])
+    P[imin:imax] .= reverse(sol[1, :])
+    Q[imin:imax] .= reverse(sol[2, :])
 
-    P, Q, imax
+    P, Q, imin
 end
 
-function sch_outward(l::Int64, Z::Int64, E::Float64, V::Vector{Float64}, r::Vector{Float64}, rp::Vector{Float64}; max_val::Float64=1e+6)::Tuple{Vector{Float64}, Vector{Float64}, Int64}
-    C = @. 2 * (V - E) + l*(l+1) / r^2
-
-    # Boundary condition
-    rmin = r[1]
-    if l == 0
-        y0 = 1 - Z * rmin
-        yp0 = -Z
-    else
-        y0 = rmin ^ l
-        yp0 = l * rmin ^ (l - 1)
-    end
-    u0 = [y0 * r[1], yp0 * r[1] + y0]
-
-    Cmid = midpoints(C, r)
-    rp_mid = midpoints(rp, r)
-
-    # u1p = u2 * rp
-    # u2p = C * u1 * rp
-    function f!(du, u, _p, t)
-        _t = floor(Int, t)
-        if _t == t
-            du[1] = u[2] * rp[_t]
-            du[2] = C[_t] * u[1] * rp[_t]
-        else
-            du[1] = u[2] * rp_mid[_t]
-            du[2] = Cmid[_t] * u[1] * rp_mid[_t]
-        end
-        nothing
-    end
-
-    N = length(r)
-
-    function condition(u, t, integrator)
-        abs(u[1]) > max_val || abs(u[2]) > max_val
-    end
-
-    function affect!(integrator)
-        terminate!(integrator)
-    end
-
-    cb = DiscreteCallback(condition, affect!)
-
-    prob = DiscreteProblem(f!, u0, (1, N-1))
-    sol = solve(prob, SOLVER, dt=1, adaptive=false, callback=cb)
-
-    P = zeros(Float64, N)
-    Q = zeros(Float64, N)
-
-    imax = length(sol[1, :])
-
-    P[1:imax] .= sol[1, :]
-    Q[1:imax] .= sol[2, :]
-
-    P, Q, imax
-end
 
 """
     schroed_outward_adams(l, Z, E, V, r, rp; max_val=1e+6)

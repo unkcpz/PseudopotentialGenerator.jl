@@ -1,42 +1,27 @@
 @testset "reigen norel" begin
     # Hydrogen-like atom
-    Z = 6
-    using Plots
-    using Colors
+    Z = 92
 
-    palette = distinguishable_colors(10)  # Generate 10 distinct colors
+    for perturb in [true, false]
+        for n in 1:3, l in 0:n-1
+            E_exact = -Z^2 / (2.0 * n^2)
+            mesh = Mesh(1e-8, 20.0, 1e+7, 5000)
+            V(r) = -Z / r
+            E_window = [-5000.0, -0.0]
+            E_init = -1000.0
 
-    plot()
-    for perturb in [true], n in 1:2, l in 0:n-1
-    #for perturb in [true], n in 1:1, l in 0:n-1
-        E_exact = -Z^2 / (2.0 * n^2)
-        mesh = Mesh(1e-8, 50.0, 1e+6, 5000)
-        V(r) = -Z / r
-        E_window = [-5000.0, -0.0]
-        E_init = -1000.0
+            E, P, Q = solve_radial_eigenproblem(n, l, Z, V, mesh; tol=1e-9, max_iter=100, E_window=E_window, E_ini = E_init, rel = false, perturb = perturb)
+            @test E ≈ E_exact atol = 1e-5
 
-        E, P, Q = solve_radial_eigenproblem(n, l, Z, V, mesh; tol=1e-9, max_iter=100, E_window=E_window, E_ini = E_init, rel = false, perturb = perturb)
-        @test E ≈ E_exact atol = 1e-4
+            # Test the wrappered solver from dftatom
+            E_fpgen, P_fpgen, Q_fpgen = FPGEN.solve_radial_eigenproblem(n, l, Z, V, mesh; tol=1e-9, max_iter=100, E_window=E_window, E_ini = E_init, rel = false, perturb = perturb)
+            @test E_fpgen ≈ E_exact atol = 1e-5
 
-        Vinner = @. V(mesh.r) + l*(l+1) / (2 * mesh.r^2)
-        ctp = find_ctp(Vinner, E)
-
-        # random color
-        color = palette[rand(1:10)]
-
-        plot!(mesh.r, P, label="n = $n, l = $l", color=color)
-        xlims!(0, 5)
-        # plot vertical line at ctp
-        vline!([mesh.r[ctp]], label="ctp: n=$n, l=$l", linestyle=:dash, color=color)
-        savefig("test.png")
-
-        #E_fpgen, P_fpgen, Q_fpgen = FPGEN.solve_radial_eigenproblem(n, l, Z, V, mesh; tol=1e-9, max_iter=100, E_window=E_window, E_ini = E_init, rel = false, perturb = perturb)
-        #@test E_fpgen ≈ E_exact atol = 1e-4
-
-        # The wavefunction returned should also be the same
-        #for idx in [10, 50, 100]
-        #    @test Q[idx] ≈ Q_fpgen[idx] atol = 1e-4
-        #    @test P[idx] ≈ P_fpgen[idx] atol = 1e-4
-        #end
+            # The wavefunction returned should also be the same
+            for idx in [10, 50, 100]
+                @test Q[idx] ≈ Q_fpgen[idx] atol = 1e-5
+                @test P[idx] ≈ P_fpgen[idx] atol = 1e-5
+            end
+        end
     end
 end

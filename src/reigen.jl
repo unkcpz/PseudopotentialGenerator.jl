@@ -1,9 +1,9 @@
 function solve_radial_eigenproblem(n::Int64, l::Int64, Z::Int64, V::Function, mesh::Mesh; 
     tol=1e-9, max_iter=200, E_window=[-8000.0, -0.0], E_ini = -1000.0, rel = false, perturb = false, normalize=true)::Tuple{Float64, Vector{Float64}, Vector{Float64}, Bool}
     V = V.(mesh.r)
-    E, Q, P, is_converged = solve_radial_eigenproblem(n, l, Z, V, mesh; tol=tol, max_iter=max_iter, E_window=E_window, E_ini = E_ini, rel = rel, perturb = perturb, normalize=normalize)
+    E, P, Q, is_converged = solve_radial_eigenproblem(n, l, Z, V, mesh; tol=tol, max_iter=max_iter, E_window=E_window, E_ini = E_ini, rel = rel, perturb = perturb, normalize=normalize)
 
-    E, Q, P, is_converged
+    E, P, Q, is_converged
 end
 
 function solve_radial_eigenproblem(n::Int64, l::Int64, Z::Int64, V::Vector{Float64}, mesh::Mesh; 
@@ -120,7 +120,7 @@ function solve_radial_eigenproblem(n::Int64, l::Int64, Z::Int64, V::Vector{Float
         # inward integration
         P_inward = zeros(Float64, N)
         Q_inward = zeros(Float64, N)
-        P_inward[ctp:end], Q_inward[ctp:end], imin = schroed_inward_adams(l, E, V[ctp:end], mesh.r[ctp:end], mesh.rp[ctp:end])
+        P_inward[ctp:end], Q_inward[ctp:end], imin = sch_inward(l, E, V[ctp:end], mesh.r[ctp:end], mesh.rp[ctp:end])
         if imin > 1
             # The inward integration to reach the turning point, diverged
             @warn "Inward integration to reach the turning point diverged."
