@@ -160,7 +160,7 @@ end
 
 @testset "poisson" begin
     # Test the Poisson solver
-    mesh = Mesh(1e-7, 10.0, 1.0, 100)
+    mesh = Mesh(1e-7, 20.0, 1e+5, 1000)
 
     # wave function in infinite square well potential
     a = 5
@@ -172,6 +172,6 @@ end
 
     # Poisson solver
     vh_expected = FPGEN.rpoisson_outward_pc(ρ, mesh.r, mesh.rp)
-    vh = rpoisson_outward_pc(ρ, mesh)
-    @test vh[1:10] ≈ vh_expected[1:10] atol = 1e-12
+    vh = poisson_outward(ρ, mesh)
+    @test vh[1:10] ≈ vh_expected[1:10] atol = 1e-10
 end

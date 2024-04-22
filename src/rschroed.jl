@@ -1,4 +1,4 @@
-using DifferentialEquations
+using OrdinaryDiffEq
 
 function sch_outward(l::Int64, Z::Int64, E::Float64, V::Vector{Float64}, r::Vector{Float64}, rp::Vector{Float64}; max_val::Float64=1e+6)::Tuple{Vector{Float64}, Vector{Float64}, Int64}
     C = @. 2 * (V - E) + l*(l+1) / r^2
