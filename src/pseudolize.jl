@@ -62,14 +62,13 @@ function pseudolize(
     v_sl = SemiLocalPotential(v_pspot_dict)
 
     if kbform
-        v_kb = sl2kb(v_sl)
-        return v_kb
+        return sl2kb(v_sl, mesh)
     else
         return v_sl
     end
 end
 
-function sl2kb(v_sl::SemiLocalPotential)::KBFormPotential
+function sl2kb(v_sl::SemiLocalPotential, mesh::Mesh)::KBFormPotential
     # Convert the semi-local potential to Kleinman-Bylander form
 
     # The local potential can, in principle, be arbitrarily chosen, but since the summation of nonlocal part need to be truncated at some value of l, 
@@ -85,7 +84,31 @@ function sl2kb(v_sl::SemiLocalPotential)::KBFormPotential
         end
     end
 
-    # XXX ekb, proj_kb are not implemented yet
+    # ekb, proj_kb from SL potential stored as KB potential
+    # 10.1103/PhysRevB.44.8503 eq.28, 29, 30
+    ϕs = v_sl.ϕs
+    if isnothing(ϕs)
+        throw(ArgumentError("ϕs is not provided in the SemiLocalPotential to convert to KBFormPotential"))
+    end
+
+    ekb = Dict{NamedTuple{(:n, :l), Tuple{Int64, Int64}}, Float64}()
+    projkb = Dict{NamedTuple{(:n, :l), Tuple{Int64, Int64}}, Vector{Float64}}()
+    coskb = Dict{NamedTuple{(:n, :l), Tuple{Int64, Int64}}, Vector{Float64}}()
+    for (nl, ϕ) in ϕs
+        # u = rϕ
+        Δvu = @. (v_sl.v[nl] - v_pspot_local) * (mesh.r * ϕ)
+
+        uΔv_Δvu = integrate(Δvu .* Δvu, mesh.rp)
+        u_Δv_u = integrate(Δvu .* u, mesh.rp)
+
+        ekb[nl] = uΔv_Δvu ./ u_Δv_u
+        projkb[nl] = @. Δvu / sqrt(uΔv_Δvu)
+        coskb[nl] = @. u_Δv_u / sqrt(uΔv_Δvu)  # eq.33
+    end
+
+    v_kb = KBFormPotential(v_pspot_local, ϕs, ekb, projkb, coskb)
+
+    v_kb
 end
 
 """

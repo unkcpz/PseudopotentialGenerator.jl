@@ -2,12 +2,15 @@ abstract type Potential end
 
 struct SemiLocalPotential <: Potential
     v::Dict{NamedTuple{(:n, :l), Tuple{Int64, Int64}}, Vector{Float64}}
+    ϕs::Dict{NamedTuple{(:n, :l), Tuple{Int64, Int64}}, Vector{Float64}}
 end
 
 struct KBFormPotential <: Potential
     v_local::Vector{Float64}
-    ekb
-    proj_kb
+    ϕs::Dict{NamedTuple{(:n, :l), Tuple{Int64, Int64}}, Vector{Float64}}
+    ekb::Dict{NamedTuple{(:n, :l), Tuple{Int64, Int64}}, Float64}
+    projkb::Dict{NamedTuple{(:n, :l), Tuple{Int64, Int64}}, Vector{Float64}}
+    coskb::Dict{NamedTuple{(:n, :l), Tuple{Int64, Int64}}, Vector{Float64}}
 end
 
 # TODO: ? also make it a Potential type?
