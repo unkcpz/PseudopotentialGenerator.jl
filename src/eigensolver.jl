@@ -58,16 +58,15 @@ function solve_radial_eigenproblem(n::Int64, l::Int64, Z::Int64, V::Vector{Float
             # check if the wave function is not monotonic
             # if it is monotonic, it has no peak
             P, Q, imax = sch_outward(l, Z, E, V, mesh.r, mesh.rp)
-            minidx = get_min_idx(P[1:imax])
-            #if is_monotonic(P[1:imax])
-            if  minidx <=0
+            crossidx = find_x_cross_idx(P[1:imax])
+            if  crossidx < 1
                 @warn "Wave function get from outward integration is monotonic, it has no peak"
                 break
             end
-            P[minidx:end] .= 0.0
-            Q[minidx:end] .= 0.0
-            
-            if count_nodes(P[1:minidx-1]) != n - l - 1
+            P[crossidx:end] .= 0.0
+            Q[crossidx:end] .= 0.0
+
+            if count_nodes(P[1:crossidx-1]) != n - l - 1
                 @warn "Number of nodes in the wave function is not equal to n - l - 1"
                 break
             end
@@ -195,16 +194,6 @@ function find_ctp(V::Vector{Float64}, E::Float64)::Int64
     N
 end
 
-function is_monotonic(P::Vector{Float64})::Bool
-    N = length(P)
-    for i in 2:N
-        if abs(P[i]) < abs(P[i-1])
-            return false
-        end
-    end
-    return true
-end
-
 function count_nodes(P::Vector{Float64})::Int64
     N = length(P)
     nnodes = 0
@@ -218,14 +207,19 @@ function count_nodes(P::Vector{Float64})::Int64
     nnodes
 end
 
-function get_min_idx(y::Vector{Float64})::Int64
-    k = length(y)
-    while abs(y[k-1]) < abs(y[k])
-        k -= 1
-        if k == 1
-            break
+"""
+    find_x_cross_idx(y::Vector{Float64})::Int64
+
+Helper to find the index of the first crossing point of the x-axis from the right.
+Since from imax always large. We can start from the right to find the first crossing point.
+"""
+function find_x_cross_idx(y::Vector{Float64})::Int64
+    N = length(y)
+    for idx in N:-1:2
+        if abs(y[idx-1]) > abs(y[idx])
+            return idx
         end
     end
-    k = k - 1
-    k
+
+    return 0
 end

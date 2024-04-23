@@ -1,8 +1,13 @@
 using OrdinaryDiffEq
 
-function sch_outward(l::Int64, Z::Int64, E::Float64, V::Vector{Float64}, r::Vector{Float64}, rp::Vector{Float64}; max_val::Float64=1e+6)::Tuple{Vector{Float64}, Vector{Float64}, Int64}
-    C = @. 2 * (V - E) + l*(l+1) / r^2
-
+function sch_outward(
+    l::Int64, 
+    Z::Int64, 
+    E::Float64, 
+    V::Vector{Float64}, 
+    r::Vector{Float64}, 
+    rp::Vector{Float64};
+    max_val::Float64=1e+6)::Tuple{Vector{Float64}, Vector{Float64}, Int64}
     # Boundary condition
     # P0 = r ** (l + 1)
     # Q0 = (l + 1) * r ** l
@@ -16,16 +21,12 @@ function sch_outward(l::Int64, Z::Int64, E::Float64, V::Vector{Float64}, r::Vect
     end
     u0 = [y0 * rmin, yp0 * rmin + y0]
 
-    # Compare to dftatom RK4+adams ode solver, this still not stable at large r when rmax is 
-    # too large, for Z=92 the coulomb potential is fine with rmax=20, but for rmax=50, the 
-    # solution diverged. The reason maybe the interval is too large while the interpolation 
-    # is not accurate enough.
-    # TODO: rethink how to precisely define the "mid" points
+    C = @. 2 * (V - E) + l*(l+1) / r^2
+
     rmids = midpoints(r)
+    rpmids = r[2:end] - r[1:end-1]
     Vmids = midpoints(V, r)
     Cmids = @. 2 * (Vmids - E) + l*(l+1) / rmids^2
-    rpmids = r[2:end] - r[1:end-1]
-    # TRY??: rp_mid = sqrt.(rp[1:end-1] .* rp[2:end])    # Only for exponential mesh, compare with rp_mid above, err < 1e-10, not help
 
     # u1p = u2 * rp
     # u2p = C * u1 * rp
@@ -43,8 +44,6 @@ function sch_outward(l::Int64, Z::Int64, E::Float64, V::Vector{Float64}, r::Vect
         nothing
     end
 
-    N = length(r)
-
     function condition(u, t, integrator)
         abs(u[1]) > max_val || abs(u[2]) > max_val
     end
@@ -55,12 +54,16 @@ function sch_outward(l::Int64, Z::Int64, E::Float64, V::Vector{Float64}, r::Vect
 
     cb = DiscreteCallback(condition, affect!)
 
+    N = length(r)
+
     prob = DiscreteProblem(f!, u0, (1, N))
-    sol = solve(prob, ABM54(), dt=1, adaptive=false, callback=cb)
+    sol = solve(prob, VCABM5(), dt=1, adaptive=false, callback=cb)
 
     P = zeros(Float64, N)
     Q = zeros(Float64, N)
 
+    # NOTE!! The Y[imax] can be equal to Y[imax-1] since the callback stop at the condition
+    # where the value is already exceeded and the imax is set to have the value of previous point
     imax = length(sol[1, :])
 
     P[1:imax] .= sol[1, :]
@@ -102,7 +105,6 @@ function sch_inward(l::Int64, E::Float64, V::Vector{Float64}, r::Vector{Float64}
     Vmids = midpoints(V, r)
     Cmids = @. 2 * (Vmids - E) + l*(l+1) / rmids^2
     rpmids = r[2:end] - r[1:end-1]
-    # TRY??: rp_mid = sqrt.(rp[1:end-1] .* rp[2:end])    # Only for exponential mesh, compare with rp_mid above, err < 1e-10, not help
 
     # u1p = u2 * rp
     # u2p = C * u1 * rp
@@ -131,7 +133,7 @@ function sch_inward(l::Int64, E::Float64, V::Vector{Float64}, r::Vector{Float64}
     cb = DiscreteCallback(condition, affect!)
 
     prob = DiscreteProblem(f!, u0, (imax, 1))
-    sol = solve(prob, ABM54(), dt=-1, adaptive=false, callback=cb)
+    sol = solve(prob, VCABM5(), dt=-1, adaptive=false, callback=cb)
 
     P = zeros(Float64, length(r))
     Q = zeros(Float64, length(r))

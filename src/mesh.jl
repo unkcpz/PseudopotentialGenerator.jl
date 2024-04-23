@@ -6,27 +6,29 @@ import Polynomials: derivative
     Mesh
 
 A mesh object that stores the radial grid points and their derivatives.
-To create a mesh object, use the constructor `Mesh(r_min, r_max, a, N)`.
+To create a mesh object, use the constructor `Mesh(rmin, rmax, a, N)`.
 
 The radial grid points are generated using the formula:
 
-    r[i] = r_min + alpha * (exp(beta * (i - 1)) - 1)
+    r[i] = rmin + alpha * (exp(beta * (i - 1)) - 1)
 
-    alpha = (r_max - r_min) / (exp(beta * N) - 1) 
+    alpha = (rmax - rmin) / (exp(beta * N) - 1) 
     
     beta = log(a) / (N - 1).
 
 The actual number of points in the mesh is N+1.
 """
 struct Mesh
-    r_min::Float64
-    r_max::Float64
+    rmin::Float64
+    rmax::Float64
     a::Float64
     _N::Int64
     N::Int64
     r::Vector{Float64}
     rp::Vector{Float64}
-    function Mesh(r_min::Float64, r_max::Float64, a::Float64, N::Int64)
+    alpha::Float64
+    beta::Float64
+    function Mesh(rmin::Float64, rmax::Float64, a::Float64, N::Int64)
         r = zeros(Float64, N)
         rp = zeros(Float64, N)
 
@@ -36,25 +38,27 @@ struct Mesh
             throw(ArgumentError("require a > 0"))
         elseif (abs(a - 1) < eps(typeof(a)))
             # Uniform grid if a = 1
-            r = range(r_min, r_max, length=N)
-            rp = fill((r_max - r_min) / N_intervals, N)
+            r = range(rmin, rmax, length=N)
+            rp = fill((rmax - rmin) / N_intervals, N)
+            alpha = 0.0
+            beta = 0.0
         else
             # Exponential grid
             if (N_intervals > 1)
                 beta = log(a) / (N_intervals - 1)
-                alpha = (r_max - r_min) / (exp(beta * N_intervals) - 1)
+                alpha = (rmax - rmin) / (exp(beta * N_intervals) - 1)
                 for i = 1:N
-                    r[i] = r_min + alpha * (exp(beta * (i - 1)) - 1)
+                    r[i] = rmin + alpha * (exp(beta * (i - 1)) - 1)
                     rp[i] = alpha * beta * exp(beta * (i - 1))
                 end
             elseif N_intervals == 1
-                r = [r_min, r_max]
+                r = [rmin, rmax]
             else
                 throw(ArgumentError("require N > 0"))
             end
         end
 
-        new(r_min, r_max, a, N_intervals, N, r, rp)
+        new(rmin, rmax, a, N_intervals, N, r, rp, alpha, beta)
     end
 end
 
@@ -91,12 +95,12 @@ end
 
 
 function mesh_exp_deriv2(mesh::Mesh)::Vector{Float64}
-    rpp = mesh_exp_deriv2(mesh.r_min, mesh.r_max, mesh.a, mesh._N)
+    rpp = mesh_exp_deriv2(mesh.rmin, mesh.rmax, mesh.a, mesh._N)
     rpp
 end
 
 
-function mesh_exp_deriv2(r_min::Float64, r_max::Float64, a::Float64, N::Int64)::Vector{Float64}
+function mesh_exp_deriv2(rmin::Float64, rmax::Float64, a::Float64, N::Int64)::Vector{Float64}
     rpp = zeros(Float64, N+1)
     if a < 0
         throw(ArgumentError("require a > 0"))
@@ -107,7 +111,7 @@ function mesh_exp_deriv2(r_min::Float64, r_max::Float64, a::Float64, N::Int64)::
         # Exponential grid
         if (N > 1)
             beta = log(a) / (N - 1)
-            alpha = (r_max - r_min) / (exp(beta * N) - 1)
+            alpha = (rmax - rmin) / (exp(beta * N) - 1)
             for i = 1:N+1
                 rpp[i] = alpha * beta^2 * exp(beta * (i - 1))
             end
