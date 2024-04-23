@@ -12,7 +12,7 @@ include("mesh.jl")
 export mesh_exp, mesh_exp_deriv, mesh_exp_deriv2
 
 # radial Schrödinger equation outward and inward integration
-include("rshroed.jl")
+include("rschroed.jl")
 export schroed_outward_adams
 
 # radial eigen solver

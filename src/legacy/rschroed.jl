@@ -19,8 +19,8 @@ V is a vector.
 """
 function schroed_outward_adams(l::Int64, Z::Int64, E::Float64, V::Vector{Float64}, r::Vector{Float64}, rp::Vector{Float64}; max_val::Float64=1e+6)::Tuple{Vector{Float64}, Vector{Float64}, Int64}
     N = length(r)
-    u1 = zeros(Float64, N)  # Q
-    u2 = zeros(Float64, N)  # P
+    u1 = zeros(Float64, N)  # P
+    u2 = zeros(Float64, N)  # Q
     u1p = zeros(Float64, N)
     u2p = zeros(Float64, N)
 
@@ -95,8 +95,8 @@ Integrate the Schrödinger equation inward using the Adams method.
 """
 function schroed_inward_adams(l::Int64, E::Float64, V::Vector{Float64}, r::Vector{Float64}, rp::Vector{Float64}; max_val::Float64=1e+300)::Tuple{Vector{Float64}, Vector{Float64}, Int64}
     N = length(r)
-    u1 = zeros(Float64, N)  # Q
-    u2 = zeros(Float64, N)  # P
+    u1 = zeros(Float64, N)  # P
+    u2 = zeros(Float64, N)  # Q
     u1p = zeros(Float64, N)
     u2p = zeros(Float64, N)
 

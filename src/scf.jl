@@ -186,7 +186,7 @@ end
 # TODO: move vh to a separate file
 function compute_vh(ρ, mesh::Mesh)::Vector{Float64}
     # compute the Hartree potential
-    vh = rpoisson_outward_pc(ρ, mesh)
+    vh = poisson_outward(ρ, mesh)
     vh
 end
 

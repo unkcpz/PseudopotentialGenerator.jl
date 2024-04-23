@@ -1,4 +1,4 @@
-function rpoisson_outward_pc(ρ::Vector{Float64}, mesh::Mesh)::Vector{Float64}
+function rpoisson_outward_pc(ρ::Vector{Float64}, r::Vector{Float64}, rp::Vector{Float64})::Vector{Float64}
     # Translate from dftatom:
     # It rewrites it to the equivalent system of first order ODEs on a uniform
     # grid:
@@ -9,8 +9,6 @@ function rpoisson_outward_pc(ρ::Vector{Float64}, mesh::Mesh)::Vector{Float64}
     # and integrates outward using Adams method. The initial conditions are:
     #   V (R(1)) = u1(1) = 4*pi * \int r * rho(r) dr
     #   V'(R(1)) = u2(1) = 0
-    r = mesh.r
-    rp = mesh.rp
     N = length(r)
 
     u1 = zeros(Float64, N)

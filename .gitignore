@@ -8,3 +8,6 @@ deps/*.so
 Manifest.toml
 
 .vscode/*.json
+
+*.png
+*.jld2
