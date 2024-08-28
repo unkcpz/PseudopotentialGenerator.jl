@@ -1,13 +1,14 @@
 using OrdinaryDiffEq
 
 function sch_outward(
-    l::Int64, 
-    Z::Int64, 
-    E::Float64, 
-    V::Vector{Float64}, 
-    r::Vector{Float64}, 
+    l::Int64,
+    Z::Int64,
+    E::Float64,
+    V::Vector{Float64},
+    r::Vector{Float64},
     rp::Vector{Float64};
-    max_val::Float64=1e+6)::Tuple{Vector{Float64}, Vector{Float64}, Int64}
+    max_val::Float64 = 1e+6,
+)::Tuple{Vector{Float64},Vector{Float64},Int64}
     # Boundary condition
     # P0 = r ** (l + 1)
     # Q0 = (l + 1) * r ** l
@@ -16,17 +17,17 @@ function sch_outward(
         y0 = 1 - Z * rmin
         yp0 = -Z
     else
-        y0 = rmin ^ l
-        yp0 = l * rmin ^ (l - 1)
+        y0 = rmin^l
+        yp0 = l * rmin^(l - 1)
     end
     u0 = [y0 * rmin, yp0 * rmin + y0]
 
-    C = @. 2 * (V - E) + l*(l+1) / r^2
+    C = @. 2 * (V - E) + l * (l + 1) / r^2
 
     rmids = midpoints(r)
-    rpmids = r[2:end] - r[1:end-1]
+    rpmids = r[2:end] - r[1:(end - 1)]
     Vmids = midpoints(V, r)
-    Cmids = @. 2 * (Vmids - E) + l*(l+1) / rmids^2
+    Cmids = @. 2 * (Vmids - E) + l * (l + 1) / rmids^2
 
     # u1p = u2 * rp
     # u2p = C * u1 * rp
@@ -57,7 +58,7 @@ function sch_outward(
     N = length(r)
 
     prob = DiscreteProblem(f!, u0, (1, N))
-    sol = solve(prob, VCABM5(), dt=1, adaptive=false, callback=cb)
+    sol = solve(prob, VCABM5(), dt = 1, adaptive = false, callback = cb)
 
     P = zeros(Float64, N)
     Q = zeros(Float64, N)
@@ -72,8 +73,15 @@ function sch_outward(
     P, Q, imax
 end
 
-function sch_inward(l::Int64, E::Float64, V::Vector{Float64}, r::Vector{Float64}, rp::Vector{Float64}; max_val::Float64=1e+6)::Tuple{Vector{Float64}, Vector{Float64}, Int64}
-    C = @. 2 * (V - E) + l*(l+1) / r^2
+function sch_inward(
+    l::Int64,
+    E::Float64,
+    V::Vector{Float64},
+    r::Vector{Float64},
+    rp::Vector{Float64};
+    max_val::Float64 = 1e+6,
+)::Tuple{Vector{Float64},Vector{Float64},Int64}
+    C = @. 2 * (V - E) + l * (l + 1) / r^2
 
     # For large r, the asymptotic is:
     # P(r) = exp(-χ * r)
@@ -103,8 +111,8 @@ function sch_inward(l::Int64, E::Float64, V::Vector{Float64}, r::Vector{Float64}
 
     rmids = midpoints(r)
     Vmids = midpoints(V, r)
-    Cmids = @. 2 * (Vmids - E) + l*(l+1) / rmids^2
-    rpmids = r[2:end] - r[1:end-1]
+    Cmids = @. 2 * (Vmids - E) + l * (l + 1) / rmids^2
+    rpmids = r[2:end] - r[1:(end - 1)]
 
     # u1p = u2 * rp
     # u2p = C * u1 * rp
@@ -133,7 +141,7 @@ function sch_inward(l::Int64, E::Float64, V::Vector{Float64}, r::Vector{Float64}
     cb = DiscreteCallback(condition, affect!)
 
     prob = DiscreteProblem(f!, u0, (imax, 1))
-    sol = solve(prob, VCABM5(), dt=-1, adaptive=false, callback=cb)
+    sol = solve(prob, VCABM5(), dt = -1, adaptive = false, callback = cb)
 
     P = zeros(Float64, length(r))
     Q = zeros(Float64, length(r))

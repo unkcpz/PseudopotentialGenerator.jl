@@ -1,13 +1,13 @@
 abstract type Potential end
 
 struct SemiLocalPotential <: Potential
-    v::Dict{NamedTuple{(:n, :l), Tuple{Int64, Int64}}, Vector{Float64}}
+    v::Dict{NamedTuple{(:n, :l),Tuple{Int64,Int64}},Vector{Float64}}
 end
 
 struct KBFormPotential <: Potential
     v_local::Vector{Float64}
-    ekb
-    proj_kb
+    ekb::Any
+    proj_kb::Any
 end
 
 # TODO: ? also make it a Potential type?
@@ -25,7 +25,7 @@ function thomas_fermi_potential(Z::Int64, r::Float64)::Float64
     # There is no analytic solution, but one can solve this approximately. We use:
     # http://arxiv.org/abs/physics/0511017
 
-    x = r * (128 * Z / (9*π^2))^(1/3)
+    x = r * (128 * Z / (9 * π^2))^(1 / 3)
 
     α = 0.7280642371
     β = -0.5430794693

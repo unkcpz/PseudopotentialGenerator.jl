@@ -3,7 +3,7 @@ const SPEED_OF_LIGHT = 137.035999037
 
 # Hydrogen-like atom energy: E = - Z^2 / (2.0 * n^2)
 function hydrogen_like_energy(n::Int64, Z::Int64)::Float64
-    - Z^2 / (2.0 * n^2)
+    -Z^2 / (2.0 * n^2)
 end
 
 struct Orbital

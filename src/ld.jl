@@ -1,4 +1,11 @@
-function compute_ld(l::Int, Z::Int, ε::Float64, mesh::Mesh, vae::Vector{Float64}, rc::Float64)
+function compute_ld(
+    l::Int,
+    Z::Int,
+    ε::Float64,
+    mesh::Mesh,
+    vae::Vector{Float64},
+    rc::Float64,
+)
     # rc is user defined cutoff radius, it may not be in the grid
     # round it to the nearest grid point ≤ rc
     if rc > mesh.r[end] || rc < mesh.r[1]
@@ -10,7 +17,7 @@ function compute_ld(l::Int, Z::Int, ε::Float64, mesh::Mesh, vae::Vector{Float64
     P, Q, _ = sch_outward(l, Z, ε, vae, mesh.r, mesh.rp)
 
     # Normarlize the wave function
-    S = integrate(P .^ 2, mesh.rp, method=:trapz7)
+    S = integrate(P .^ 2, mesh.rp, method = :trapz7)
     S = sqrt(abs(S))
 
     if S > 0
@@ -25,7 +32,15 @@ function compute_ld(l::Int, Z::Int, ε::Float64, mesh::Mesh, vae::Vector{Float64
     return Q[ic] / P[ic] - 1 / mesh.r[ic]
 end
 
-function compute_atanld(l::Int, Z::Int, mesh::Mesh, vae::Vector{Float64}, rc::Float64; window=[-20.0, 20.0], δ=0.01)
+function compute_atanld(
+    l::Int,
+    Z::Int,
+    mesh::Mesh,
+    vae::Vector{Float64},
+    rc::Float64;
+    window = [-20.0, 20.0],
+    δ = 0.01,
+)
     x = window[1]:δ:window[2]
     y = [atan(compute_ld(l, Z, ε, mesh, vae, rc)) for ε in x]
 

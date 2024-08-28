@@ -1,13 +1,50 @@
-function solve_radial_eigenproblem(n::Int64, l::Int64, Z::Int64, V::Function, mesh::Mesh; 
-    tol=1e-9, max_iter=200, E_window=[-8000.0, -0.0], E_ini = -1000.0, rel = false, perturb = false, normalize=true)::Tuple{Float64, Vector{Float64}, Vector{Float64}, Bool}
+function solve_radial_eigenproblem(
+    n::Int64,
+    l::Int64,
+    Z::Int64,
+    V::Function,
+    mesh::Mesh;
+    tol = 1e-9,
+    max_iter = 200,
+    E_window = [-8000.0, -0.0],
+    E_ini = -1000.0,
+    rel = false,
+    perturb = false,
+    normalize = true,
+)::Tuple{Float64,Vector{Float64},Vector{Float64},Bool}
     V = V.(mesh.r)
-    E, P, Q, is_converged = solve_radial_eigenproblem(n, l, Z, V, mesh; tol=tol, max_iter=max_iter, E_window=E_window, E_ini = E_ini, rel = rel, perturb = perturb, normalize=normalize)
+    E, P, Q, is_converged = solve_radial_eigenproblem(
+        n,
+        l,
+        Z,
+        V,
+        mesh;
+        tol = tol,
+        max_iter = max_iter,
+        E_window = E_window,
+        E_ini = E_ini,
+        rel = rel,
+        perturb = perturb,
+        normalize = normalize,
+    )
 
     E, P, Q, is_converged
 end
 
-function solve_radial_eigenproblem(n::Int64, l::Int64, Z::Int64, V::Vector{Float64}, mesh::Mesh; 
-    tol=1e-9, max_iter=200, E_window=[-8000.0, -0.0], E_ini = -1000.0, rel = false, perturb = false, normalize=true)::Tuple{Float64, Vector{Float64}, Vector{Float64}, Bool}
+function solve_radial_eigenproblem(
+    n::Int64,
+    l::Int64,
+    Z::Int64,
+    V::Vector{Float64},
+    mesh::Mesh;
+    tol = 1e-9,
+    max_iter = 200,
+    E_window = [-8000.0, -0.0],
+    E_ini = -1000.0,
+    rel = false,
+    perturb = false,
+    normalize = true,
+)::Tuple{Float64,Vector{Float64},Vector{Float64},Bool}
     # TODO: add dirac solver
     N = length(mesh.r)
     P = zeros(Float64, N)
@@ -25,11 +62,11 @@ function solve_radial_eigenproblem(n::Int64, l::Int64, Z::Int64, V::Vector{Float
         E = (Emin + Emax) / 2
     end
 
-    Vinner = @. V + l*(l+1) / (2 * mesh.r^2)
+    Vinner = @. V + l * (l + 1) / (2 * mesh.r^2)
 
     # PT method first then shooting method
     last_bisect = true
-    for iter in 1:max_iter
+    for iter = 1:max_iter
         # TODO: write iteration log information
         # bisection converged
         if abs(Emax - Emin) < tol
@@ -42,7 +79,7 @@ function solve_radial_eigenproblem(n::Int64, l::Int64, Z::Int64, V::Vector{Float
                 @warn "Bisection converged, but perturbation theory correction was used in the last iteration. The consistent stopping criterion is to converge with abs(dE), not abs(Emax - Emin)."
                 break
             end
-            
+
             if abs(Emin - E_window[1]) < eps(Float64)
                 # Emin did not change in the loop, something is wrong
                 @warn "Emin did not change in the loop, something is wrong"
@@ -59,14 +96,14 @@ function solve_radial_eigenproblem(n::Int64, l::Int64, Z::Int64, V::Vector{Float
             # if it is monotonic, it has no peak
             P, Q, imax = sch_outward(l, Z, E, V, mesh.r, mesh.rp)
             crossidx = find_x_cross_idx(P[1:imax])
-            if  crossidx < 1
+            if crossidx < 1
                 @warn "Wave function get from outward integration is monotonic, it has no peak"
                 break
             end
             P[crossidx:end] .= 0.0
             Q[crossidx:end] .= 0.0
 
-            if count_nodes(P[1:crossidx-1]) != n - l - 1
+            if count_nodes(P[1:(crossidx - 1)]) != n - l - 1
                 @warn "Number of nodes in the wave function is not equal to n - l - 1"
                 break
             end
@@ -78,7 +115,7 @@ function solve_radial_eigenproblem(n::Int64, l::Int64, Z::Int64, V::Vector{Float
         end
 
         # Beyond the turning point, meaning the partical is classically forbidden
-        # The wave function exponentially decays. 
+        # The wave function exponentially decays.
         ctp = find_ctp(Vinner, E)
 
         if !perturb
@@ -93,11 +130,12 @@ function solve_radial_eigenproblem(n::Int64, l::Int64, Z::Int64, V::Vector{Float
         end
 
         # outward integration
-        P[1:ctp], Q[1:ctp], imax = sch_outward(l, Z, E, V[1:ctp], mesh.r[1:ctp], mesh.rp[1:ctp])
+        P[1:ctp], Q[1:ctp], imax =
+            sch_outward(l, Z, E, V[1:ctp], mesh.r[1:ctp], mesh.rp[1:ctp])
         nnodes = count_nodes(P[1:imax])
 
         if nnodes != n - l - 1 || ctp == N || imax < ctp
-            # FROM DFTATOM: 
+            # FROM DFTATOM:
             # If the number of nodes is not correct, or we didn't manage to
             # integrate all the way to "ctp", or if "ctp" was too large, we just
             # use bisection:
@@ -110,7 +148,7 @@ function solve_radial_eigenproblem(n::Int64, l::Int64, Z::Int64, V::Vector{Float
                 Emin = E
             end
             E = (Emax + Emin) / 2
-                     
+
             last_bisect = true
             continue
         end
@@ -119,7 +157,8 @@ function solve_radial_eigenproblem(n::Int64, l::Int64, Z::Int64, V::Vector{Float
         # inward integration
         P_inward = zeros(Float64, N)
         Q_inward = zeros(Float64, N)
-        P_inward[ctp:end], Q_inward[ctp:end], imin = sch_inward(l, E, V[ctp:end], mesh.r[ctp:end], mesh.rp[ctp:end])
+        P_inward[ctp:end], Q_inward[ctp:end], imin =
+            sch_inward(l, E, V[ctp:end], mesh.r[ctp:end], mesh.rp[ctp:end])
         if imin > 1
             # The inward integration to reach the turning point, diverged
             @warn "Inward integration to reach the turning point diverged."
@@ -137,11 +176,11 @@ function solve_radial_eigenproblem(n::Int64, l::Int64, Z::Int64, V::Vector{Float
         Q_inward *= factor
 
         # match the outward and inward solutions
-        P[ctp+1:end] = P_inward[ctp+1:end]
-        Q[ctp+1:end] = Q_inward[ctp+1:end]
+        P[(ctp + 1):end] = P_inward[(ctp + 1):end]
+        Q[(ctp + 1):end] = Q_inward[(ctp + 1):end]
 
         # E₂ ≈ E₁ + (Q₁⁻ - Q₁⁺) * P₁(ctp) / 2 ∫ P₁^2 dr
-        S = integrate(P .^ 2, mesh.rp, method=:trapz7)
+        S = integrate(P .^ 2, mesh.rp, method = :trapz7)
         dE = (Q[ctp] - Q_inward[ctp]) * P[ctp] / (2 * S)
 
         if abs(dE) < tol
@@ -170,7 +209,7 @@ function solve_radial_eigenproblem(n::Int64, l::Int64, Z::Int64, V::Vector{Float
 
     # Normarlize the wave function
     if normalize
-        S = integrate(P .^ 2, mesh.rp, method=:trapz7)
+        S = integrate(P .^ 2, mesh.rp, method = :trapz7)
         S = sqrt(abs(S))
 
         if S > 0
@@ -186,7 +225,7 @@ end
 
 function find_ctp(V::Vector{Float64}, E::Float64)::Int64
     N = length(V)
-    for i in N:-1:1
+    for i = N:-1:1
         if V[i] < E
             return i
         end
@@ -197,9 +236,9 @@ end
 function count_nodes(P::Vector{Float64})::Int64
     N = length(P)
     nnodes = 0
-    for i in 2:N
+    for i = 2:N
         # exclude the case P[i] == 0.0 once, to avoid double counting
-        if sign(P[i]) != sign(P[i-1]) && P[i] != 0.0
+        if sign(P[i]) != sign(P[i - 1]) && P[i] != 0.0
             nnodes += 1
         end
     end
@@ -215,8 +254,8 @@ Since from imax always large. We can start from the right to find the first cros
 """
 function find_x_cross_idx(y::Vector{Float64})::Int64
     N = length(y)
-    for idx in N:-1:2
-        if abs(y[idx-1]) > abs(y[idx])
+    for idx = N:-1:2
+        if abs(y[idx - 1]) > abs(y[idx])
             return idx
         end
     end

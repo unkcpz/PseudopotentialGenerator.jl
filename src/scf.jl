@@ -29,32 +29,39 @@ end
 
 # define the SCF problem
 function self_consistent_field(
-    Z::Int64, mesh::Mesh, orbs::Vector{Orbital}; 
-    mixing_beta::Float64=0.4, abstol::Float64=1e-6, maxiters_scf::Int64=100, perturb::Bool=true, maxiters_eigersolver::Int64=1000)
-    # use nonliear solver to solve the problem to find fixed point of: 
+    Z::Int64,
+    mesh::Mesh,
+    orbs::Vector{Orbital};
+    mixing_beta::Float64 = 0.4,
+    abstol::Float64 = 1e-6,
+    maxiters_scf::Int64 = 100,
+    perturb::Bool = true,
+    maxiters_eigersolver::Int64 = 1000,
+)
+    # use nonliear solver to solve the problem to find fixed point of:
     # f_ks => residual(V) = KS(V) - V
 
     # f is the residual of the potential (non-Coulombic part)
     # V_total = V_coulomb + V_noncoulomb
 
     # The initial guess for the potential: TF potential
-    v_tot = @. thomas_fermi_potential(Z, mesh.r) 
+    v_tot = @. thomas_fermi_potential(Z, mesh.r)
     v_coulomb = @. coulomb_potential(Z, mesh.r)
     r_size = length(mesh.r)
 
     v0 = v_tot - v_coulomb
-    
-    # Parameters to define the atom status, which are parameters should not 
+
+    # Parameters to define the atom status, which are parameters should not
     # changing during the SCF iteration
     params = (
-        Z=Z, 
-        mesh=mesh, 
-        orbs=orbs, 
-        v_coulomb=v_coulomb, 
-        maxiters_eigersolver=maxiters_eigersolver, 
-        relativistic=false, 
-        perturb=perturb,
-        xc=:lda,
+        Z = Z,
+        mesh = mesh,
+        orbs = orbs,
+        v_coulomb = v_coulomb,
+        maxiters_eigersolver = maxiters_eigersolver,
+        relativistic = false,
+        perturb = perturb,
+        xc = :lda,
     )
 
     # For storing the step information
@@ -71,7 +78,7 @@ function self_consistent_field(
     function fixpoint_ks(vin, params)
         # TODO: the problem that when using without perturb method,
         # vin will be a vector of ForwardDiff.Dual
-        # not sure why this happens and how to fix it. Can be produce even with H. 
+        # not sure why this happens and how to fix it. Can be produce even with H.
         ρ = v2ρ!(vin, params, saved)
         vout = ρ2v!(ρ, params, saved)
 
@@ -89,21 +96,34 @@ function self_consistent_field(
     end
 
     prob = NonlinearProblem(fixpoint_ks, v0, params)
-    solve(prob, alg=NLsolveJL(; method=:anderson, beta=mixing_beta); abstol=abstol, maxiters=maxiters_scf)
+    solve(
+        prob,
+        alg = NLsolveJL(; method = :anderson, beta = mixing_beta);
+        abstol = abstol,
+        maxiters = maxiters_scf,
+    )
 
     # wavefunction of every orbital
-    ϕs = Dict{NamedTuple{(:n, :l), Tuple{Int64, Int64}}, Vector{Float64}}()
-    ε_lst = Dict{NamedTuple{(:n, :l), Tuple{Int64, Int64}}, Float64}()
-    occs = Dict{NamedTuple{(:n, :l), Tuple{Int64, Int64}}, Float64}()
+    ϕs = Dict{NamedTuple{(:n, :l),Tuple{Int64,Int64}},Vector{Float64}}()
+    ε_lst = Dict{NamedTuple{(:n, :l),Tuple{Int64,Int64}},Float64}()
+    occs = Dict{NamedTuple{(:n, :l),Tuple{Int64,Int64}},Float64}()
     for (idx, orb) in enumerate(orbs)
         ϕ = saved.Ys[idx, :]
         # TODO: consider to bundle ϕ and ε into a struct since they are always appear in pair
-        ϕs[(n=orb.n, l=orb.l)] = ϕ
-        ε_lst[(n=orb.n, l=orb.l)] = saved.ε_lst[idx]
-        occs[(n=orb.n, l=orb.l)] = orb.f
+        ϕs[(n = orb.n, l = orb.l)] = ϕ
+        ε_lst[(n = orb.n, l = orb.l)] = saved.ε_lst[idx]
+        occs[(n = orb.n, l = orb.l)] = orb.f
     end
 
-    (; E_tot=saved.E_tot, v_tot=saved.v_tot, ρ=saved.ρ, ϕs=ϕs, ε_lst=ε_lst, xc=params.xc, occs=occs)
+    (;
+        E_tot = saved.E_tot,
+        v_tot = saved.v_tot,
+        ρ = saved.ρ,
+        ϕs = ϕs,
+        ε_lst = ε_lst,
+        xc = params.xc,
+        occs = occs,
+    )
 end
 
 function v2ρ!(v_in::Vector{Float64}, p, saved)::Vector{Float64}
@@ -124,7 +144,19 @@ function v2ρ!(v_in::Vector{Float64}, p, saved)::Vector{Float64}
         Eini = saved.ε_lst[idx]
 
         v_tot = v_in + p.v_coulomb
-        ε, P, _, is_converged = solve_radial_eigenproblem(n, l, p.Z, v_tot, p.mesh; tol=1e-9, max_iter=p.maxiters_eigersolver, E_window=[Emin, Emax], E_ini = Eini, rel = p.relativistic, perturb = p.perturb)
+        ε, P, _, is_converged = solve_radial_eigenproblem(
+            n,
+            l,
+            p.Z,
+            v_tot,
+            p.mesh;
+            tol = 1e-9,
+            max_iter = p.maxiters_eigersolver,
+            E_window = [Emin, Emax],
+            E_ini = Eini,
+            rel = p.relativistic,
+            perturb = p.perturb,
+        )
 
         if !is_converged
             throw(ArgumentError("Failed to solve the radial eigenproblem"))
@@ -137,7 +169,7 @@ function v2ρ!(v_in::Vector{Float64}, p, saved)::Vector{Float64}
         Y = P ./ r
 
         # update rho and orbitals
-        @. rho += Y ^ 2 * f
+        @. rho += Y^2 * f
         saved.Ys[idx, :] = Y
     end
 
@@ -175,12 +207,12 @@ function compute_vxc(ρ::Vector{Float64}, xc::Symbol)
         throw(ArgumentError("Unsupported exchange-correlation functional $xc"))
     end
 
-    result_x = evaluate(func_x, rho=ρ)
-    result_c = evaluate(func_c, rho=ρ)
+    result_x = evaluate(func_x, rho = ρ)
+    result_c = evaluate(func_c, rho = ρ)
 
     v_xc = result_x.vrho[:] + result_c.vrho[:]
     ε_xc = result_x.zk + result_c.zk
-    (; v_xc=v_xc, ε_xc=ε_xc)    # TODO: renamed to v and ε?? xc seems redundant
+    (; v_xc = v_xc, ε_xc = ε_xc)    # TODO: renamed to v and ε?? xc seems redundant
 end
 
 # TODO: move vh to a separate file

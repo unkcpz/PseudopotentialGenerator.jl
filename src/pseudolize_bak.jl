@@ -3,8 +3,15 @@ using SpecialFunctions
 using Polynomials: fit, coeffs, Polynomial, derivative
 using ForwardDiff
 
-# nbes for the number of bessel functions used 
-function rrkj(aewfc::Vector{Float64}, l::Int, rc::Float64, rgrid::Vector{Float64}, dr::Vector{Float64}, nbessel::Int=3)
+# nbes for the number of bessel functions used
+function rrkj(
+    aewfc::Vector{Float64},
+    l::Int,
+    rc::Float64,
+    rgrid::Vector{Float64},
+    dr::Vector{Float64},
+    nbessel::Int = 3,
+)
     # find the rc in rgrid
     rc, ic = find_rc_ic(rgrid, rc)
     ae_norm = compute_ae_norm(aewfc, dr, ic)
@@ -16,7 +23,7 @@ function rrkj(aewfc::Vector{Float64}, l::Int, rc::Float64, rgrid::Vector{Float64
     qs = find_qs(ld_rbessel, nbessel, 0.0, 20.0)
     println("qs=", qs)
     println("Estimate cutoff= ", 0.5 * qs[end]^2)
-    
+
     # find rrkj coefficients
     x0 = 0.0
     residual(x) = compute_rrkj_residual(x, qs, ae_norm, ae_deriv, rc, rgrid, dr, l)
@@ -28,7 +35,7 @@ function rrkj(aewfc::Vector{Float64}, l::Int, rc::Float64, rgrid::Vector{Float64
     println("rrkj coefficient: ", c)
 
     pswfc .= aewfc # > rc the wfc is the same
-    for i in 1:ic
+    for i = 1:ic
         pswfc[i] = rrkj_func(rgrid[i], l, c, qs)
     end
 
@@ -39,9 +46,11 @@ end
 
 qbess(l, q, r) = sphericalbesselj_fast(l, q * r)
 qbessp(l, q, r) = sphericalbesseljp_fast(l, q * r)
-function qbesspp(l, q, r) 
+function qbesspp(l, q, r)
     x = q * r
-    res = (l * (l+1) - x * x) * sphericalbesselj_fast(l,x) - 2 * x * sphericalbesseljp_fast(l,x) / r^2
+    res =
+        (l * (l + 1) - x * x) * sphericalbesselj_fast(l, x) -
+        2 * x * sphericalbesseljp_fast(l, x) / r^2
 
     res
 end
@@ -53,11 +62,11 @@ logder_rbessel(l, q, r) = rqbessp(l, q, r) ./ rqbess(l, q, r)
 function find_rc_ic(rgrid, rc)
     ic = 1
     for i in eachindex(rgrid)
-        if rgrid[i] <= rc < rgrid[i+1]
+        if rgrid[i] <= rc < rgrid[i + 1]
             rc = rgrid[i]
             ic = i
         end
-    end 
+    end
 
     rc, ic
 end
@@ -67,7 +76,7 @@ function compute_rrkj_residual(c2, qs, ae_norm, ae_deriv, rc, rgrid, dr, l)
 
     _, ic = find_rc_ic(rgrid, rc)
     r = rgrid[1:ic]
-    ps_norm = sum(rrkj_func(r, l, c, qs).^2 .* dr[1:ic])
+    ps_norm = sum(rrkj_func(r, l, c, qs) .^ 2 .* dr[1:ic])
 
     res = ps_norm - ae_norm
     println("residual", res)
@@ -82,7 +91,7 @@ function solve_rrkj_linear(c2, qs, ae_deriv, rc, l)
 
     # lhs side
     A = zeros(Float64, 2, 2)
-    for i in 1:3
+    for i = 1:3
         rq = rqbess(l, qs[i], rc)
         rqp = rqbesspp(l, qs[i], rc)
         if i < 3
@@ -110,7 +119,7 @@ function rrkj_func(r::Float64, l, c, qs)
     res
 end
 
-function rrkj_func(rs::Vector{Float64}, l, c, qs) 
+function rrkj_func(rs::Vector{Float64}, l, c, qs)
     res = zeros(Float64, length(rs))
     for (i, r) in enumerate(rs)
         res[i] = rrkj_func(r, l, c, qs)
@@ -123,7 +132,7 @@ function compute_ae_norm(aewfc, dr, ic)
     # density sum up
     ds = 0.0
     # println(aewfc)
-    for i in 1:ic
+    for i = 1:ic
         ds += aewfc[i] * aewfc[i] * dr[i]
     end
 
@@ -132,10 +141,10 @@ end
 
 # fitting a polynamial and compute derivative
 function compute_ae_deriv(aewfc, rgrid, ic)
-    # if ic < 11 throw 
-    rs = rgrid[ic-10:ic+10]
-    fs = aewfc[ic-10:ic+10]
-    poly = fit(rs, fs, 6) |> p -> round.(coeffs(p), digits=5) |> Polynomial
+    # if ic < 11 throw
+    rs = rgrid[(ic - 10):(ic + 10)]
+    fs = aewfc[(ic - 10):(ic + 10)]
+    poly = fit(rs, fs, 6) |> p -> round.(coeffs(p), digits = 5) |> Polynomial
     polyp = derivative(poly)
     polypp = derivative(polyp)
 
@@ -149,10 +158,10 @@ function find_qs(f, nbessel, q_min, q_max)
     qs = zeros(Float64, nbessel)
     q = q_min
     intv = 0.05 # the step to find root
-    for i in 1:nbessel
+    for i = 1:nbessel
         while q < q_max
             try
-                qs[i] = find_zero(f, (q, q+intv), Bisection())
+                qs[i] = find_zero(f, (q, q + intv), Bisection())
             catch exc
                 if isa(exc, ArgumentError)
                     q += intv
@@ -161,11 +170,11 @@ function find_qs(f, nbessel, q_min, q_max)
             end
 
             q += intv
-            
+
             break
         end
     end
-    
+
     qs
     # qs = find_zeros(f, q_min, q_max)
 
@@ -191,7 +200,8 @@ https://en.wikipedia.org/wiki/Bessel_function#Spherical_Bessel_functions and wit
     l == 2 && return (sin(x) * (3 - x^2) + cos(x) * (-3x)) / x^3
     l == 3 && return (sin(x) * (15 - 6x^2) + cos(x) * (x^3 - 15x)) / x^4
     l == 4 && return (sin(x) * (105 - 45x^2 + x^4) + cos(x) * (10x^3 - 105x)) / x^5
-    l == 5 && return (sin(x) * (945 - 420x^2 + 15x^4) + cos(x) * (-945x + 105x^3 - x^5)) / x^6
+    l == 5 &&
+        return (sin(x) * (945 - 420x^2 + 15x^4) + cos(x) * (-945x + 105x^3 - x^5)) / x^6
     error("The case l = $l is not implemented")
 end
 
@@ -213,7 +223,10 @@ end
     l == 1 && return ((x^2 - 2) * sin(x) + 2x * cos(x)) / x^3
     l == 2 && return ((4x^2 - 9) * sin(x) - x * (x^2 - 9) * cos(x)) / x^4
     l == 3 && return ((60x - 7x^3) * cos(x) - (x^4 - 27x^2 + 60) * sin(x)) / x^5
-    l == 4 && return ((-11x^4 + 240x^2 - 525) * sin(x) + x * (x^4 - 65x^2 + 525) * cos(x)) / x^6
-    l == 5 && return (x * (16x^4 - 735x^2 + 5670) * cos(x) + (x^6 - 135x^4 + 2625x^2 - 5670) * sin(x)) / x^7
+    l == 4 &&
+        return ((-11x^4 + 240x^2 - 525) * sin(x) + x * (x^4 - 65x^2 + 525) * cos(x)) / x^6
+    l == 5 && return (
+        x * (16x^4 - 735x^2 + 5670) * cos(x) + (x^6 - 135x^4 + 2625x^2 - 5670) * sin(x)
+    ) / x^7
     error("The case l = $l is not implemented")
 end

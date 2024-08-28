@@ -1,6 +1,6 @@
 using OrdinaryDiffEq
 
-function poisson_outward(ρ::Vector{Float64}, mesh::Mesh; max_val=1e+6)::Vector{Float64}
+function poisson_outward(ρ::Vector{Float64}, mesh::Mesh; max_val = 1e+6)::Vector{Float64}
     # Converted 2nd Poisson ODE in rgrid to uniform grid
     # u1p = u2 * Rp
     # u2p = -(4*pi*rho + 2*u2/r) * Rp
@@ -9,7 +9,7 @@ function poisson_outward(ρ::Vector{Float64}, mesh::Mesh; max_val=1e+6)::Vector{
     rp = mesh.rp
 
     rmids = midpoints(r)
-    rpmids = r[2:end] - r[1:end-1]
+    rpmids = r[2:end] - r[1:(end - 1)]
     ρmids = midpoints(ρ, r)
 
     function f!(du, u, _p, t)
@@ -43,7 +43,7 @@ function poisson_outward(ρ::Vector{Float64}, mesh::Mesh; max_val=1e+6)::Vector{
 
     cb = DiscreteCallback(condition, affect!)
     prob = DiscreteProblem(f!, y0, (1, N))
-    sol = solve(prob, ABM54(), dt=1, adaptive=false, callback=cb)
+    sol = solve(prob, ABM54(), dt = 1, adaptive = false, callback = cb)
 
     sol[1, :]
 end
