@@ -7,7 +7,7 @@ export DFTATOM_JL   # DFTATOM_JL is the Julia implementation
 
 # Julia implementation
 include("common.jl")
-export SPPED_OF_LIGHT, Orbital
+export SPEED_OF_LIGHT, Orbital
 
 include("integ1d.jl")
 export integrate
@@ -29,7 +29,7 @@ include("scf.jl")
 export self_consistent_field
 
 include("ode_poisson.jl")
-export rpoisson_outward_pc, poisson_outward
+export poisson_outward
 
 include("pseudolize.jl")
 export pseudolize
