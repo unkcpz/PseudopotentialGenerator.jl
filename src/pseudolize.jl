@@ -21,7 +21,7 @@ function pseudolize(
     rc::Dict{NamedTuple{(:n, :l),Tuple{Int64,Int64}},Float64};
     method = :TM,
     kbform = true,
-)::Potential
+)
 
     # To store the results from pseudolization for post processing
     v_pspot_dict = Dict{NamedTuple{(:n, :l),Tuple{Int64,Int64}},Vector{Float64}}()
@@ -65,9 +65,9 @@ function pseudolize(
 
     if kbform
         v_kb = sl2kb(v_sl)
-        return v_kb
+        return v_kb, ϕ_ps_dict
     else
-        return v_sl
+        return v_sl, ϕ_ps_dict
     end
 end
 
