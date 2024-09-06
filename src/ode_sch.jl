@@ -8,6 +8,7 @@ function sch_outward(
     r::Vector{Float64},
     rp::Vector{Float64};
     max_val::Float64 = 1e+6,
+    algo = VCABM5(),
 )::Tuple{Vector{Float64},Vector{Float64},Int64}
     # Boundary condition
     # P0 = r ** (l + 1)
@@ -58,7 +59,7 @@ function sch_outward(
     N = length(r)
 
     prob = DiscreteProblem(f!, u0, (1, N))
-    sol = solve(prob, VCABM5(), dt = 1, adaptive = false, callback = cb)
+    sol = solve(prob, algo, dt = 1, adaptive = false, callback = cb)
 
     P = zeros(Float64, N)
     Q = zeros(Float64, N)
@@ -80,6 +81,7 @@ function sch_inward(
     r::Vector{Float64},
     rp::Vector{Float64};
     max_val::Float64 = 1e+6,
+    algo = VCABM5(),
 )::Tuple{Vector{Float64},Vector{Float64},Int64}
     C = @. 2 * (V - E) + l * (l + 1) / r^2
 
@@ -141,7 +143,7 @@ function sch_inward(
     cb = DiscreteCallback(condition, affect!)
 
     prob = DiscreteProblem(f!, u0, (imax, 1))
-    sol = solve(prob, VCABM5(), dt = -1, adaptive = false, callback = cb)
+    sol = solve(prob, algo, dt = -1, adaptive = false, callback = cb)
 
     P = zeros(Float64, length(r))
     Q = zeros(Float64, length(r))
