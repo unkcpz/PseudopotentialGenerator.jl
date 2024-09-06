@@ -1,4 +1,5 @@
 using Polynomials: derivative
+using ForwardDiff
 
 """
     pseudolize(ϕ, ε, vae, mesh, rc; method=:TM)
@@ -151,7 +152,7 @@ function pseudolize_TM(
     # c2, c4, c6, c8, c10: coefficients that solved in linear equation
     cs = zeros(Float64, 5)
 
-    function fixpoint_tm(c2, params)
+    function fixpoint_tm(c2_x, params)
         # static params
         ic = params.ic
         rc = params.rc
@@ -160,6 +161,9 @@ function pseudolize_TM(
         vpprc = params.vpprc
         ae_norm = params.ae_norm
         ε = params.ε
+
+        # c2 will have Dual type: https://docs.sciml.ai/NonlinearSolve/stable/basics/faq/
+        c2 = ForwardDiff.value(c2_x)
 
         # The last NL condition (29g)
         c4 = -c2^2 / (2 * nl.l + 5)
