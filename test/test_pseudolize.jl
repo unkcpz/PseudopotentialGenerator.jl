@@ -47,7 +47,7 @@ rc = Dict{NamedTuple{(:n, :l), Tuple{Int64, Int64}}, Float64}(
     ylims!(-10, 10)
     xlims!(0, 20)
 
-    v_pspot = pseudolize(ae_info, mesh, rc; method=:TM, kbform=false)    
+    v_pspot, _ = pseudolize(ae_info, mesh, rc; method=:TM, kbform=false)    
 
     for nl in keys(rc)
         vline!([rc[nl]], label="rc: l=$(nl.l)", linestyle=:dash)

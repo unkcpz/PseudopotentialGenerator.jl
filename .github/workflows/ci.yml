@@ -22,7 +22,8 @@ jobs:
         include:
           - {mode: stable,  os: ubuntu-latest}
           - {mode: stable,  os: macOS-latest}
-          - {mode: stable,  os: windows-latest}
+          # “A computer is like air conditioning – it becomes useless when you open Windows.” - Linus Torvalds
+          # - {mode: stable,  os: windows-latest}
           - {mode: stable,  os: ubuntu-latest}
           - {mode: nightly, os: ubuntu-latest}
 
@@ -48,7 +49,7 @@ jobs:
           compiler: gcc
           version: 13
       - run: |
-          make -C deps/ FC=${{ env.FC }}
+          make -C deps/ FC=${{ env.FC }} all
 
       - uses: julia-actions/cache@v2
       - uses: julia-actions/julia-buildpkg@v1
