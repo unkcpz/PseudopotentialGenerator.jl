@@ -5,7 +5,7 @@ using Plots
 # Only need to run once
 
 Z = 6
-mesh = Mesh(1e-7, 20.0, 2.7e+6, 1000)
+mesh = Mesh(1e-7, 20.0, 2.7e+6, 5000)
 orbs = [
     Orbital(Z, 1, 0, 2),
     Orbital(Z, 2, 0, 2),
@@ -73,10 +73,10 @@ rc = Dict{NamedTuple{(:n, :l), Tuple{Int64, Int64}}, Float64}(
     rcx = 2.0 # the r cut to compute atan logder
     for nl in keys(rc)
         l = nl.l
-        x_ae, y_ae = compute_atanld(l, Z, mesh, ae_info.vae, rcx, window=[-5.0, 5.0], δ=0.1)
+        x_ae, y_ae = compute_atanld(l, Z, mesh, ae_info.vae, rcx, window=[-5.0, 5.0], δ=0.05)
         plot!(x_ae, y_ae, label="AE: l = $l", linestyle=:dash, color=colors[l])
 
-        x_ps, y_ps = compute_atanld(l, Z, mesh, v_pspot.v[nl], rcx, window=[-5.0, 5.0], δ=0.1)
+        x_ps, y_ps = compute_atanld(l, Z, mesh, v_pspot.v[nl], rcx, window=[-5.0, 5.0], δ=0.05)
         plot!(x_ps, y_ps, label="PS: l = $l", color=colors[l])
     end
 

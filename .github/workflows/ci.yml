@@ -21,7 +21,8 @@ jobs:
       matrix:
         include:
           - {mode: stable,  os: ubuntu-latest}
-          - {mode: stable,  os: macOS-latest}
+          # have 'arm64', need 'x86_64') ??
+          # - {mode: stable,  os: macOS-latest}
           # “A computer is like air conditioning – it becomes useless when you open Windows.” - Linus Torvalds
           # - {mode: stable,  os: windows-latest}
           - {mode: stable,  os: ubuntu-latest}
