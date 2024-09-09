@@ -7,10 +7,10 @@
 [ci-img]: https://github.com/unkcpz/PGEN.jl/workflows/CI/badge.svg?branch=main&event=push
 [ci-url]: https://github.com/unkcpz/PGEN.jl/actions
 
-[ccov-img]: https://codecov.io/gh/unkcpz/PGEN.jl/branch/main/graph/badge.svg?token=xxxx
+[ccov-img]: https://codecov.io/gh/unkcpz/PGEN.jl/branch/main/graph/badge.svg?token=2KH3oPQm9E
 [ccov-url]: https://codecov.io/gh/unkcpz/PGEN.jl
 
-[license-img]: https://img.shields.io/github/license/unkcpz/PGEN.jl.svg?maxAge=2592000
+[license-img]: https://img.shields.io/badge/License-MIT-yellow.svg 
 [license-url]: https://github.com/unkcpz/PGEN.jl/blob/main/LICENSE
 
 PGEN.jl generates pseudopotential for plane-wave DFT.
