@@ -37,4 +37,15 @@ export pseudolize
 include("ld.jl")
 export compute_ld, compute_atanld
 
+macro ignore(args...) end
+
+# For LSP working at example scripts
+@ignore include("../examples/logder.jl")
+@ignore include("../examples/continuity_envolve.jl")
+@ignore include("../examples/numerical_stability.jl")
+
+# at tests
+@ignore include("../test/runtests.jl")
+
 end
+
