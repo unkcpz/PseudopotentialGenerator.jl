@@ -19,6 +19,20 @@ PGEN.jl generates pseudopotential for plane-wave DFT.
 
 The [examples](https://github.com/unkcpz/PGEN.jl/tree/main/examples) folder provide scripts include solving atomic Schrödinger equation and pseudolize to get pseudopotentials.
 
+## For developers
+
+To run tests, some functions from [DFTATOM](https://github.com/certik/dftatom) is wrappered as reference which need to compiled first.
+
+```bash
+make -C deps all
+```
+
+Then can run tests by 
+
+```bash
+julia --project=@. -e 'using Pkg; Pkg.test()'
+```
+
 ## TODO
 
 - [x] Solving atomic DFT in radial coordination
