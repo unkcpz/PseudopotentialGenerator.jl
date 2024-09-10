@@ -9,5 +9,5 @@ Manifest.toml
 
 .vscode/*.json
 
-*.png
-*.jld2.DS_Store
+*.jld2
+.DS_Store

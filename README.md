@@ -1,10 +1,12 @@
+<img src="https://github.com/unkcpz/PGEN.jl/blob/main/misc/logo/PGEN_light.png?raw=true" alt="pgen logo" height="100px" />
+
 # PGEN.jl
 
 | **Build Status**                                |  **License**                     |
 |:----------------------------------------------- |:-------------------------------- |
 | [![][ci-img]][ci-url] [![][ccov-img]][ccov-url] | [![][license-img]][license-url]  |
 
-[ci-img]: https://github.com/unkcpz/PGEN.jl/workflows/CI/badge.svg?branch=main&event=push
+[ci-img]: https://github.com/unkcpz/PGEN.jl/workflows/CI/badge.svg
 [ci-url]: https://github.com/unkcpz/PGEN.jl/actions
 
 [ccov-img]: https://codecov.io/gh/unkcpz/PGEN.jl/branch/main/graph/badge.svg?token=2KH3oPQm9E
