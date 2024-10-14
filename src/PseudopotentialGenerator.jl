@@ -1,4 +1,4 @@
-module PGEN
+module PseudopotentialGenerator
 
 # Reference implementation for testing
 include("DFTATOM.jl")

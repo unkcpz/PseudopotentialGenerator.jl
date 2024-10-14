@@ -2,7 +2,7 @@
 # Goto deps folder and run `make all`
 
 # %%
-using PGEN
+using PseudopotentialGenerator
 using Plots
 using OrdinaryDiffEq
 gr()

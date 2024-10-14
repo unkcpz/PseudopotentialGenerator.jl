@@ -1,5 +1,5 @@
 # %%
-using PGEN
+using PseudopotentialGenerator
 using Plots
 gr()
 

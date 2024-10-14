@@ -7,4 +7,4 @@ export rpoisson_outward_pc
 include("ode1d.jl")
 export rk4_integrate
 
-include("aux.jl")
+include("auxiliary.jl")

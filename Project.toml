@@ -1,6 +1,6 @@
-name = "PGEN"
+name = "PseudopotentialGenerator"
 uuid = "62755698-03fb-4fba-b479-db9468a99e5f"
-authors = ["Jusong Yu <jusong.yeu@gmail.com> and contributors"]
+authors = ["Jusong Yu <jusong.d.yu@gmail.com> and contributors"]
 version = "0.1.0"
 
 [deps]

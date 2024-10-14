@@ -1,25 +1,25 @@
-<img src="https://github.com/unkcpz/PGEN.jl/blob/main/misc/logo/PGEN_light.png?raw=true" alt="pgen logo" height="100px" />
+<img src="https://github.com/unkcpz/PseudopotentialGenerator.jl/blob/main/misc/logo/_light.png?raw=true" alt="pgen logo" height="100px" />
 
-# PGEN.jl
+# PseudopotentialGenerator.jl
 
 | **Build Status**                                |  **License**                     |
 |:----------------------------------------------- |:-------------------------------- |
 | [![][ci-img]][ci-url] [![][ccov-img]][ccov-url] | [![][license-img]][license-url]  |
 
-[ci-img]: https://github.com/unkcpz/PGEN.jl/workflows/CI/badge.svg
-[ci-url]: https://github.com/unkcpz/PGEN.jl/actions
+[ci-img]: https://github.com/unkcpz/PseudopotentialGenerator.jl/workflows/CI/badge.svg
+[ci-url]: https://github.com/unkcpz/PseudopotentialGenerator.jl/actions
 
-[ccov-img]: https://codecov.io/gh/unkcpz/PGEN.jl/branch/main/graph/badge.svg?token=2KH3oPQm9E
-[ccov-url]: https://codecov.io/gh/unkcpz/PGEN.jl
+[ccov-img]: https://codecov.io/gh/unkcpz/PseudopotentialGenerator.jl/branch/main/graph/badge.svg?token=2KH3oPQm9E
+[ccov-url]: https://codecov.io/gh/unkcpz/PseudopotentialGenerator.jl
 
 [license-img]: https://img.shields.io/badge/License-MIT-yellow.svg 
-[license-url]: https://github.com/unkcpz/PGEN.jl/blob/main/LICENSE
+[license-url]: https://github.com/unkcpz/PseudopotentialGenerator.jl/blob/main/LICENSE
 
-PGEN.jl generates pseudopotential for plane-wave DFT.
+`PseudopotentialGenerator.jl` generates pseudopotential for plane-wave DFT.
 
 ## Usage
 
-The [examples](https://github.com/unkcpz/PGEN.jl/tree/main/examples) folder provide scripts include solving atomic Schrödinger equation and pseudolize to get pseudopotentials.
+The [examples](https://github.com/unkcpz/PseudopotentialGenerator.jl/tree/main/examples) folder provide scripts include solving atomic Schrödinger equation and pseudolize to get pseudopotentials.
 
 ## For developers
 
