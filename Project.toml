@@ -21,6 +21,7 @@ Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 SimpleNonlinearSolve = "727e6d20-b764-4bd8-a329-72de5adea6c7"
 
 [compat]
+Plots = "1"
 julia = "1"
 
 [extras]
