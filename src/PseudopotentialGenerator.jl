@@ -31,8 +31,8 @@ export self_consistent_field
 include("ode_poisson.jl")
 export poisson_outward
 
-include("pseudolize.jl")
-export pseudolize
+include("pseudize.jl")
+export pseudize
 
 include("ld.jl")
 export compute_ld, compute_atanld

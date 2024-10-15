@@ -7,7 +7,7 @@ gr()
 colors = Dict(0 => :red, 1 => :blue, 2 => :green, 3 => :orange, 4 => :purple)
 
 # %%
-# AE results for different pseudolize methods
+# AE results for different pseudize methods
 # Only need to run once
 
 Z = 6
@@ -38,7 +38,7 @@ rc = Dict{NamedTuple{(:n, :l),Tuple{Int64,Int64}},Float64}(
 # Check integration of ρ to inf is equal to Z
 # Check the wavefunction is normalized (∑ϕ^2 dr = Z)
 # plot the wavefunction and density
-v_pspot, ϕ_ps = pseudolize(ae_info, mesh, rc; method = :TM, kbform = false)
+v_pspot, ϕ_ps = pseudize(ae_info, mesh, rc; method = :TM, kbform = false)
 
 
 # %%
@@ -139,4 +139,4 @@ plot(plot_wfc, plot_pot, layout=(2, 1))
 # %%
 
 # save it to file
-savefig("/tmp/pseudolize_TM.pdf")
+savefig("/tmp/pseudize_TM.pdf")

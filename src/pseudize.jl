@@ -2,9 +2,9 @@ using Polynomials: derivative
 using ForwardDiff
 
 """
-    pseudolize(ϕ, ε, vae, mesh, rc; method=:TM)
+    pseudize(ϕ, ε, vae, mesh, rc; method=:TM)
 
-Pseudolize on the pseudo configurations. Loop over the orbitals and do the pseudolization.
+Pseudize on the pseudo configurations. Loop over the orbitals and do the pseudolization.
 The function also manage to unscreened the pseudo potential and convert it to the
 Kleinman-Bylander form.
 
@@ -15,7 +15,7 @@ Methods supported:
     - `:BHS`: (TODO) Bachelet-Hamann-Schlüter pseudopotential (doi:10.1103/PhysRevB.26.4199)
     - more...
 """
-function pseudolize(
+function pseudize(
     ae_info,    # TODO: type it
     mesh::Mesh,
     rc::Dict{NamedTuple{(:n, :l),Tuple{Int64,Int64}},Float64};
@@ -27,13 +27,13 @@ function pseudolize(
     v_pspot_dict = Dict{NamedTuple{(:n, :l),Tuple{Int64,Int64}},Vector{Float64}}()
     ϕ_ps_dict = Dict{NamedTuple{(:n, :l),Tuple{Int64,Int64}},Vector{Float64}}()
 
-    # loop over rc which defined the target orbitals to pseudolize
+    # loop over rc which defined the target orbitals to pseudize
     # The ϕs and εs are the all wavefunctions and eigenvalues from AE calculation
     for (nl, _rc) in rc
         ϕ = ae_info.ϕs[nl]
         ε = ae_info.ε_lst[nl]
         vae = ae_info.vae
-        v_pspot, ϕ_ps = pseudolize(nl, ϕ, ε, vae, mesh, _rc; method = method)
+        v_pspot, ϕ_ps = pseudize(nl, ϕ, ε, vae, mesh, _rc; method = method)
         v_pspot_dict[nl] = v_pspot
 
         # normalize the pseudo wavefunction and store it
@@ -91,11 +91,11 @@ function sl2kb(v_sl::SemiLocalPotential)::KBFormPotential
 end
 
 """
-    pseudolize(nl, ϕ, ε, vae, mesh, rc; method=:TM)
+    pseudize(nl, ϕ, ε, vae, mesh, rc; method=:TM)
 
-Pseudolize on the given orbital.
+Pseudize on the given orbital.
 """
-function pseudolize(
+function pseudize(
     nl::NamedTuple{(:n, :l),Tuple{Int64,Int64}},
     ϕ::Vector{Float64},
     ε::Float64,
@@ -105,7 +105,7 @@ function pseudolize(
     method = :TM,
 )
     if method == :TM
-        v_pspot, ϕ_ps = pseudolize_TM(nl, ϕ, ε, vae, mesh, rc)
+        v_pspot, ϕ_ps = pseudize_TM(nl, ϕ, ε, vae, mesh, rc)
     else
         throw(ArgumentError("Unsupported pseudolization method $method"))
     end
@@ -113,7 +113,7 @@ function pseudolize(
     v_pspot, ϕ_ps
 end
 
-function pseudolize_TM(
+function pseudize_TM(
     nl::NamedTuple{(:n, :l),Tuple{Int64,Int64}},
     ϕ::Vector{Float64},
     ε::Float64,

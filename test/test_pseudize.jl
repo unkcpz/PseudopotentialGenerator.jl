@@ -1,7 +1,7 @@
 using JLD2
 using Plots
 
-# AE results for different pseudolize methods
+# AE results for different pseudize methods
 # Only need to run once
 
 Z = 6
@@ -41,13 +41,13 @@ rc = Dict{NamedTuple{(:n, :l), Tuple{Int64, Int64}}, Float64}(
 # Check the wavefunction is normalized (∑ϕ^2 dr = Z)
 # plot the wavefunction and density
 
-@testset "Pseudolize TM" begin
+@testset "Pseudize TM" begin
 
     plot(mesh.r, ae_info.vae, label="AE")
     ylims!(-10, 10)
     xlims!(0, 20)
 
-    v_pspot, _ = pseudolize(ae_info, mesh, rc; method=:TM, kbform=false)    
+    v_pspot, _ = pseudize(ae_info, mesh, rc; method=:TM, kbform=false)    
 
     for nl in keys(rc)
         vline!([rc[nl]], label="rc: l=$(nl.l)", linestyle=:dash)
@@ -55,7 +55,7 @@ rc = Dict{NamedTuple{(:n, :l), Tuple{Int64, Int64}}, Float64}(
     end
 
     # save it to file
-    savefig("pseudolize_TM.png")
+    savefig("pseudize_TM.png")
 
     # Plot arctan logder and compare with AE
     # start a new plot
