@@ -21,7 +21,7 @@ Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 SimpleNonlinearSolve = "727e6d20-b764-4bd8-a329-72de5adea6c7"
 
 [compat]
-Colors = "0.12"
+Colors = "0.12, 0.13"
 Dierckx = "0.5"
 ForwardDiff = "0.10"
 Interpolations = "0.15"
