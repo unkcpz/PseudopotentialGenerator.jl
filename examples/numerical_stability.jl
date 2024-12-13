@@ -5,6 +5,7 @@
 using PseudopotentialGenerator
 using Plots
 using OrdinaryDiffEq
+using BenchmarkTool
 gr()
 
 # %%
@@ -15,16 +16,17 @@ n = 6
 l = 2
 
 E_exact = -Z^2 / (2.0 * n^2)
-mesh = Mesh(1e-10, 100.0, 1e+7, 10000)
+mesh = Mesh(1e-10, 50.0, 1e+7, 5000)
 Vf(r) = -Z / r
 V = Vf.(mesh.r);
 E_window = [-5000.0, -0.0]
 E_init = -1000.0
 
 # plot iter 1, 10, 12, 14, 50 (converged)
-j % %
+
+# %%
 # converged line
-E, P_ref, Q_sol = solve_radial_eigenproblem(
+@benchmark E, P_ref, Q_sol = solve_radial_eigenproblem(
     n,
     l,
     Z,
@@ -37,6 +39,8 @@ E, P_ref, Q_sol = solve_radial_eigenproblem(
     rel = false,
     perturb = false,
 )
+
+# %%
 
 plot(mesh.r, P_ref, label = "out/in-ward Ref", line = (4, :solid), lc = :blue)
 plot!(xlim = (0, 4))

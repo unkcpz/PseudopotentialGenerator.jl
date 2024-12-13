@@ -1,6 +1,7 @@
 # %%
 using PseudopotentialGenerator
 using Plots
+using ProfileView
 gr()
 
 # Define different color for each l
@@ -14,7 +15,10 @@ Z = 6
 mesh = Mesh(1e-7, 50.0, 2.7e+6, 10000);
 orbs = [Orbital(Z, 1, 0, 2), Orbital(Z, 2, 0, 2), Orbital(Z, 2, 1, 2)];
 
-res = self_consistent_field(
+# %%
+@benchmark self_consistent_field(
+# @profview self_consistent_field(
+# self_consistent_field(
     Z,
     mesh,
     orbs,
@@ -24,6 +28,7 @@ res = self_consistent_field(
     perturb = true,
 )
 
+# %%
 ae_info = (ε_lst = res.ε_lst, ϕs = res.ϕs, vae = res.v_tot, occs = res.occs, xc = res.xc);
 
 # %%

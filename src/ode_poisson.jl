@@ -8,9 +8,9 @@ function poisson_outward(ρ::Vector{Float64}, mesh::Mesh; max_val = 1e+6, algo =
     r = mesh.r
     rp = mesh.rp
 
-    rmids = midpoints(r)
+    rmids = midpoints(r[1:6])
     rpmids = r[2:end] - r[1:(end - 1)]
-    ρmids = midpoints(ρ, r)
+    ρmids = midpoints(ρ[1:6], r[1:6])
 
     function f!(du, u, _p, t)
         _t = floor(Int, t)

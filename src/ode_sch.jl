@@ -1,4 +1,5 @@
 using OrdinaryDiffEq
+using AllocCheck
 
 function sch_outward(
     l::Int64,
@@ -25,15 +26,15 @@ function sch_outward(
 
     C = @. 2 * (V - E) + l * (l + 1) / r^2
 
-    rmids = midpoints(r)
+    rmids = midpoints(r[1:6])
+    Vmids = midpoints(V[1:6], r[1:6])
     rpmids = r[2:end] - r[1:(end - 1)]
-    Vmids = midpoints(V, r)
     Cmids = @. 2 * (Vmids - E) + l * (l + 1) / rmids^2
 
     # u1p = u2 * rp
     # u2p = C * u1 * rp
     function f!(du, u, _p, t)
-        _t = floor(Int, t)
+        _t::Int = floor(Int, t)
         if _t == t
             rpt = rp[_t]
             Ct = C[_t]
@@ -66,10 +67,10 @@ function sch_outward(
 
     # NOTE!! The Y[imax] can be equal to Y[imax-1] since the callback stop at the condition
     # where the value is already exceeded and the imax is set to have the value of previous point
-    imax = length(sol[1, :])
+    imax = length(@view sol[1, :])
 
-    P[1:imax] .= sol[1, :]
-    Q[1:imax] .= sol[2, :]
+    P[1:imax] = @view sol[1, :]
+    Q[1:imax] = @view sol[2, :]
 
     P, Q, imax
 end
@@ -111,9 +112,10 @@ function sch_inward(
     u2 = -χ * u1
     u0 = [u1, u2]
 
-    rmids = midpoints(r)
-    Vmids = midpoints(V, r)
-    Cmids = @. 2 * (Vmids - E) + l * (l + 1) / rmids^2
+    rmids = midpoints(r[end-6:end])
+    Vmids = midpoints(V[end-6:end], r[end-6:end])
+    Cmids = zeros(length(r))
+    Cmids[end-5:end] = @. 2 * (Vmids - E) + l * (l + 1) / rmids^2
     rpmids = r[2:end] - r[1:(end - 1)]
 
     # u1p = u2 * rp

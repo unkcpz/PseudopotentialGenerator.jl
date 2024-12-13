@@ -74,6 +74,7 @@ function self_consistent_field(
     ε_lst = [hydrogen_like_energy(orb_idx, Z) for orb_idx in eachindex(orbs)]
     saved.ε_lst = ε_lst
     iter = 0
+    Δv = zeros(length(v0))
 
     function fixpoint_ks(vin, params)
         # TODO: the problem that when using without perturb method,
@@ -92,6 +93,7 @@ function self_consistent_field(
         iter += 1
 
         Δv = vin - vout
+        @info Δv[1:10]
         Δv
     end
 
@@ -104,11 +106,13 @@ function self_consistent_field(
     )
 
     # wavefunction of every orbital
+    # TODO: pre-allocate
     ϕs = Dict{NamedTuple{(:n, :l),Tuple{Int64,Int64}},Vector{Float64}}()
     ε_lst = Dict{NamedTuple{(:n, :l),Tuple{Int64,Int64}},Float64}()
     occs = Dict{NamedTuple{(:n, :l),Tuple{Int64,Int64}},Float64}()
     for (idx, orb) in enumerate(orbs)
-        ϕ = saved.Ys[idx, :]
+        # TODO: view can make it fast
+        @views ϕ = saved.Ys[idx, :]
         # TODO: consider to bundle ϕ and ε into a struct since they are always appear in pair
         ϕs[(n = orb.n, l = orb.l)] = ϕ
         ε_lst[(n = orb.n, l = orb.l)] = saved.ε_lst[idx]
@@ -191,6 +195,7 @@ function ρ2v!(ρ::Vector{Float64}, p, saved)::Vector{Float64}
 
     E_tot = total_energy(ρ, p, saved)
     saved.E_tot = E_tot
+    println(E_tot)
 
     v_out = v_xc + v_h
     saved.v_tot = v_out + p.v_coulomb

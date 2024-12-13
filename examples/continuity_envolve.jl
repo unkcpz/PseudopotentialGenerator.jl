@@ -1,6 +1,7 @@
 # %%
 using PseudopotentialGenerator
 using Plots
+using ProfileView
 gr()
 
 # %%
@@ -20,7 +21,8 @@ E_init = -1000.0
 # plot iter 1, 10, 12, 14, 50 (converged)
 # %%
 # converged line
-E, P, Q = solve_radial_eigenproblem(
+# E, P, Q = solve_radial_eigenproblem(
+@benchmark solve_radial_eigenproblem(
     n,
     l,
     Z,
@@ -31,8 +33,10 @@ E, P, Q = solve_radial_eigenproblem(
     E_window = E_window,
     E_ini = E_init,
     rel = false,
-    perturb = false,
+    perturb = true,
 )
+
+# %%
 
 plot(mesh.r, P, label = "converged", line = (2, :solid), lc = :black)
 
@@ -44,6 +48,14 @@ mesh.r[ctp]
 
 Pd = Dict()
 Qd = Dict()
+
+E = -0.124
+
+# %%
+
+@benchmark sch_outward(l, Z, E, V, mesh.r, mesh.rp)
+
+# %%
 for E in [-0.124, -0.1245, -0.125]
     P_out, Q_out, _ = sch_outward(l, Z, E, V, mesh.r, mesh.rp)
     P_in, Q_in, _ = sch_inward(l, E, V, mesh.r, mesh.rp)
