@@ -11,7 +11,7 @@ The method must be one of the following (f_ prefix means the implementation is i
     * `adams`
 """
 # TODO: FastGaussQuadrature.jl check https://discourse.julialang.org/t/numerical-integration-only-with-evaluated-point/63552/5
-function integrate(y, rp; method::Symbol = :trapz7)::Float64
+function integrate(y, rp; method::Symbol = :trapz7)
     N = length(rp)
     if N < 8
         throw(ArgumentError("Length of integrated f must be at least 8"))
@@ -67,7 +67,7 @@ function trapz5(rp::Vector{Float64}, y::Vector{Float64})::Float64
     s
 end
 
-function trapz7(rp::Vector{Float64}, y::Vector{Float64})::Float64
+function trapz7(rp, y)
     N = length(rp)
     g = y .* rp
     s =

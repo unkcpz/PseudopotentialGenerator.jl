@@ -146,13 +146,13 @@ function pseudize_TM(
     end
 
     # copy the ae wavefunction to ps wavefunction
-    rϕ_ps = copy(rϕ)
+    # rϕ_ps = copy(rϕ)
 
     # Root finding for residual TM using NL solver
     # c2, c4, c6, c8, c10: coefficients that solved in linear equation
-    cs = zeros(Float64, 5)
+    # cs = zeros(Float64, 5)
 
-    function fixpoint_tm(c2_x, params)
+    function fixpoint_tm(c2_x::T, params; rcs = false) where {T<:Real}
         # static params
         ic = params.ic
         rc = params.rc
@@ -163,7 +163,8 @@ function pseudize_TM(
         ε = params.ε
 
         # c2 will have Dual type: https://docs.sciml.ai/NonlinearSolve/stable/basics/faq/
-        c2 = ForwardDiff.value(c2_x)
+        # c2 = ForwardDiff.value(c2_x)
+        c2 = c2_x
 
         # The last NL condition (29g)
         c4 = -c2^2 / (2 * nl.l + 5)
@@ -177,7 +178,7 @@ function pseudize_TM(
         # rhs(5) =   2*vpprc - 4*(l + 1)/rc**3*rhs(2) + 4*(l + 1)/rc**2*rhs(3) - 2*(l + 1)/rc*rhs(4) - 2*rhs(3)**2 - 2*rhs(2)*rhs(4)
         prc = rϕ[ic]
         dprc = dfdr(rϕ, mesh, ic)     # TODO: or f + f' * h?
-        rhs = zeros(Float64, 5)
+        rhs = zeros(T, 5)
         rhs[1] = log(prc / rc^(nl.l + 1))
         rhs[2] = dprc / prc - (nl.l + 1) / rc
         rhs[3] = 2 * (vrc - ε) - 2 * (nl.l + 1) / rc * rhs[2] - rhs[2]^2
@@ -203,7 +204,7 @@ function pseudize_TM(
         rhs[4] -= c2 * 0 + c4 * 24 * rc
         rhs[5] -= c2 * 0 + c4 * 24
 
-        cs .= M_lhs \ rhs
+        cs = M_lhs \ rhs
         c0 = cs[1]
         c6 = cs[2]
         c8 = cs[3]
@@ -212,14 +213,19 @@ function pseudize_TM(
 
         # calculate rϕ_ps after linear solver
         p(x) = c0 + c2 * x^2 + c4 * x^4 + c6 * x^6 + c8 * x^8 + c10 * x^10 + c12 * x^12
-        @. rϕ_ps[1:ic] = mesh.r[1:ic]^(nl.l + 1) * exp(p(mesh.r[1:ic]))
+        # rϕ_ps = copy(rϕ)
+        rϕ_ps = @. mesh.r[1:ic]^(nl.l + 1) * exp(p(mesh.r[1:ic]))
 
-        fx = integrate(rϕ_ps[1:ic] .^ 2, mesh.r[1:ic]) - ae_norm  #   (29a)
+        fx = integrate(rϕ_ps .^ 2, mesh.r[1:ic]) - ae_norm  #   (29a)
 
         # TODO: log it and use more detailt message
         println("fx: ", fx)
 
+        if rcs
+            return fx, cs, rϕ_ps
+        end
         fx
+
     end
 
     vrc = vae[ic]
@@ -245,13 +251,14 @@ function pseudize_TM(
     sol = solve(prob, alg = Broyden(); abstol = 1e-10, maxiters = 200)
     c2 = sol.u
     c4 = -c2^2 / (2 * nl.l + 5)
+    fx, cs, rϕ_ps = fixpoint_tm(c2, params; rcs = true)
     c0, c6, c8, c10, c12 = cs
     p = Polynomial([c0, 0, c2, 0, c4, 0, c6, 0, c8, 0, c10, 0, c12], :x)
     dpdx = derivative(p)
     d2pdx2 = derivative(p, 2)
 
     # Get the ps wavefunction and recover the sign to AE wavefunction
-    ϕ_ps = rϕ_ps ./ mesh.r
+    ϕ_ps = [rϕ_ps; rϕ[ic+1:end]]  ./ mesh.r
     ϕ_ps .= sign * ϕ_ps
 
     # using p(x) to represent to avoid d2fdr2 with interpolation
